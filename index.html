@@ -10,13 +10,49 @@
 <meta property="og:image" content="https://surima-maker.github.io/dq10-tarot-tool/ogp.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-  :root { --main-bg: #f4f4f9; --header-bg: #1a237e; --accent: #3949ab; --text: #333; --error: #c62828; --success: #2e7d32; }
-  body { font-family: "Meiryo UI", sans-serif; margin: 0; padding: 0; background: var(--main-bg); color: var(--text); font-size: 13px; display: flex; flex-direction: column; min-height: 100vh; }
+  :root { 
+    --main-bg: #c07848; /* ゴーレムのオレンジ色（レンガ） */
+    --header-bg: #1a237e; /* 元の青色に戻しました */
+    --accent: #3949ab; 
+    --text: #333; 
+    --error: #c62828; 
+    --success: #2e7d32; 
+  }
+
+  body { 
+    font-family: "Meiryo UI", sans-serif; 
+    margin: 0; 
+    padding: 0; 
+    color: var(--text); 
+    font-size: 13px; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 100vh;
+    
+    /* ▼▼▼ ゴーレムレンガ風パターン ▼▼▼ */
+    background-color: var(--main-bg);
+    background-image: 
+      linear-gradient(335deg, rgba(0,0,0,0.15) 23px, transparent 23px),
+      linear-gradient(155deg, rgba(0,0,0,0.15) 23px, transparent 23px),
+      linear-gradient(335deg, rgba(0,0,0,0.15) 23px, transparent 23px),
+      linear-gradient(155deg, rgba(0,0,0,0.15) 23px, transparent 23px);
+    background-size: 58px 58px;
+    background-position: 0px 2px, 4px 35px, 29px 31px, 34px 6px;
+    /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+  }
   
-  header { background: var(--header-bg); color: #fff; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; }
+  header { 
+    background: var(--header-bg); 
+    color: #fff; 
+    padding: 10px 15px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
   h1 { margin: 0; font-size: 16px; font-weight: bold; }
   
-  .sticky-header { position: sticky; top: 0; z-index: 100; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .sticky-header { position: sticky; top: 0; z-index: 100; background: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
   .tabs { display: flex; border-bottom: 1px solid #ddd; }
   .tab-btn { flex: 1; padding: 12px 5px; border: none; background: #f9f9f9; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; color: #666; font-size: 12px; transition: 0.2s; }
   .tab-btn.active { border-bottom-color: var(--accent); color: var(--accent); background: #fff; }
@@ -28,10 +64,19 @@
   
   .warning-bar { background: var(--error); color: #fff; padding: 8px; text-align: center; font-size: 12px; display: none; font-weight:bold; }
 
-  .container { max-width: 800px; margin: 0 auto; padding: 15px; flex: 1; }
-  .panel { display: none; animation: fadeIn 0.2s; }
+  .container { 
+    max-width: 800px; 
+    margin: 0 auto; 
+    padding: 15px; 
+    flex: 1; 
+    background: rgba(255, 255, 255, 0.6); /* 少し透過させてレンガを見せる */
+    border-radius: 8px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+  .panel { display: none; animation: fadeIn 0.2s; background: #fff; padding: 15px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
   .panel.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
   table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
   th { background: #e0e0e0; padding: 8px; font-size: 11px; text-align: center; color: #555; }
@@ -49,7 +94,7 @@
   
   .btn-reset { background: #d32f2f; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 10px; }
   .btn-primary { width: 100%; padding: 14px; background: var(--header-bg); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition:0.2s; }
-  .btn-primary:hover { background: #283593; }
+  .btn-primary:hover { background: #283593; } /* ホバー時も青系の濃い色に */
   .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
   .prio-group { display: flex; gap: 3px; justify-content: center; }
@@ -85,8 +130,8 @@
   .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
   
   /* フッター（引用元） */
-  footer { background: #e0e0e0; color: #555; text-align: center; padding: 15px; font-size: 11px; margin-top: auto; }
-  footer a { color: #3949ab; text-decoration: none; }
+  footer { background: #1a237e; color: #fff; text-align: center; padding: 15px; font-size: 11px; margin-top: auto; border-top: 4px solid #d2691e; }
+  footer a { color: #bbdefb; text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 </style>
 </head>
@@ -855,5 +900,6 @@ function switchTab(id) {
 </body>
 
 </html>
+
 
 
