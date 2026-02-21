@@ -113,12 +113,12 @@
   <div id="panel-arcana" class="panel active">
     <div style="display:flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
       <label style="margin-right: 10px; font-size: 12px; font-weight: bold; cursor: pointer;">
-        <input type="checkbox" id="chk-reset-opt" checked> オプションも初期化
+        <input type="checkbox" id="chk-reset-opt" checked> オーラオプションも初期化
       </label>
       <button class="btn-reset" onclick="resetTab('arcana')" style="margin: 0;">このタブをリセット</button>
     </div>
     <div class="info-box">
-      <b>オプションについて</b><br>
+      <b>オーラオプションについて</b><br>
       手札でオーラを作りやすくするための設定です。<br>
       AとHを優先的に組ませ、DとHをできる限り減らすように設定されています。デフォルトは推奨の設定です。自由に変更してください。<br><br>
       <b>H</b> (Hand): 手札に残りやすい・低頻度使用<br>
@@ -127,7 +127,7 @@
       <b>D</b> (Deprecated): オーラ非推奨（オーラ教皇のリジェネは教皇で延長できないため）
     </div>
     <table id="tbl-arcana">
-      <thead><tr><th>アルカナ</th><th>枚数</th><th>オプション</th></tr></thead>
+      <thead><tr><th>アルカナ</th><th>枚数</th><th>オーラオプション</th></tr></thead>
       <tbody id="tbody-arcana"></tbody>
     </table>
   </div>
@@ -851,3 +851,4 @@ function switchTab(id) {
 </body>
 
 </html>
+
