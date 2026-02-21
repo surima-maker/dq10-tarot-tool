@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DQ10 タロットデッキ便利ツール</title>
+<style>
+  :root { --main-bg: #f4f4f9; --header-bg: #1a237e; --accent: #3949ab; --text: #333; --error: #c62828; --success: #2e7d32; }
+  body { font-family: "Meiryo UI", sans-serif; margin: 0; padding: 0; background: var(--main-bg); color: var(--text); font-size: 13px; display: flex; flex-direction: column; min-height: 100vh; }
+  
+  header { background: var(--header-bg); color: #fff; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; }
+  h1 { margin: 0; font-size: 16px; font-weight: bold; }
+  
+  .sticky-header { position: sticky; top: 0; z-index: 100; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .tabs { display: flex; border-bottom: 1px solid #ddd; }
+  .tab-btn { flex: 1; padding: 12px 5px; border: none; background: #f9f9f9; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; color: #666; font-size: 12px; transition: 0.2s; }
+  .tab-btn.active { border-bottom-color: var(--accent); color: var(--accent); background: #fff; }
+  .tab-btn:hover { background: #eee; }
+
+  .global-stats { display: flex; font-size: 14px; font-weight: bold; border-bottom: 1px solid #ddd; background: #e8eaf6; }
+  .stat-box { flex: 1; padding: 10px; text-align: center; transition: 0.3s; }
+  .stat-box.ok { background-color: #c8e6c9; color: #1b5e20; }
+  
+  .warning-bar { background: var(--error); color: #fff; padding: 8px; text-align: center; font-size: 12px; display: none; font-weight:bold; }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 15px; flex: 1; }
+  .panel { display: none; animation: fadeIn 0.2s; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
+  th { background: #e0e0e0; padding: 8px; font-size: 11px; text-align: center; color: #555; }
+  td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  
+  .click-row { cursor: pointer; transition: background-color 0.2s; }
+  .click-row:hover { filter: brightness(0.95); }
+  .desc-row td { background: #fafafa; font-size: 11px; color: #555; padding: 8px 15px; border-bottom: 2px solid #ddd; }
+
+  .btn-count { width: 30px; height: 30px; border: none; border-radius: 4px; color: #fff; font-weight: bold; cursor: pointer; font-size: 16px; display:inline-flex; align-items:center; justify-content:center; }
+  .btn-minus { background: #7B1FA2; }
+  .btn-plus { background: #2E7D32; }
+  .val-display { display: inline-block; width: 30px; text-align: center; font-weight: bold; font-size: 15px; }
+  
+  .btn-reset { background: #d32f2f; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 10px; }
+  .btn-primary { width: 100%; padding: 14px; background: var(--header-bg); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition:0.2s; }
+  .btn-primary:hover { background: #283593; }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+
+  .prio-group { display: flex; gap: 3px; justify-content: center; }
+  .prio-btn { width: 28px; height: 24px; border: 1px solid #ccc; background: #fff; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; color: #bbb; }
+  .prio-btn.active-H { background: #1976d2; color: #fff; border-color:#1565c0; }
+  .prio-btn.active-A { background: #d32f2f; color: #fff; border-color:#b71c1c; }
+  .prio-btn.active-N { background: #43A047; color: #fff; border-color:#2e7d32; }
+  .prio-btn.active-D { background: #FDD835; color: #333; border-color:#fbc02d; }
+
+  .rank-badge { color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; width: 30px; text-align: center; }
+  .rk-SSS { background: #880e4f; } .rk-SS { background: #bf360c; } .rk-S { background: #e65100; } .rk-A { background: #1565c0; } .rk-B { background: #4e342e; }
+
+  .res-card { display: inline-block; padding: 3px 6px; margin: 2px; border-radius: 4px; font-size: 11px; width: 65px; text-align: center; border:1px solid rgba(0,0,0,0.1); font-weight:bold; }
+  .res-H { background: #BBDEFB; color: #0D47A1; }
+  .res-A { background: #ffcdd2; color: #b71c1c; } 
+  .res-N { background: #C8E6C9; color: #1B5E20; } 
+  .res-D { background: #FFF9C4; color: #F57F17; } 
+
+  .deck-item { background: #fff; border: 1px solid #ddd; margin-bottom: 8px; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .deck-header { padding: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; transition:0.2s; }
+  .deck-header:hover { background: #f5f5f5; }
+  .deck-name { font-weight: bold; color: var(--header-bg); font-size:14px; }
+  .deck-body { display: none; padding: 15px; background: #fafafa; border-top: 1px solid #eee; font-size: 12px; }
+  .deck-body.open { display: block; }
+  .opt-res-row { display:flex; margin-bottom:5px; align-items: baseline; border-bottom:1px dashed #eee; padding-bottom:3px; }
+  .opt-res-mon { font-weight: bold; width:130px; color:#444; }
+  .save-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size:14px; }
+
+  .info-box { background:#e3f2fd; padding:10px; border-radius:6px; margin-bottom:15px; font-size:12px; border-left:5px solid #1976d2; line-height:1.5; }
+  .ex-tag { background: #ff9800; color: #fff; font-size: 10px; padding: 1px 4px; border-radius: 3px; margin-top: 2px; display:inline-block; }
+  .loading { font-size: 14px; font-weight: bold; color: #ef6c00; padding: 20px; text-align: center; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.5; } }
+  .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
+  
+  /* フッター（引用元） */
+  footer { background: #e0e0e0; color: #555; text-align: center; padding: 15px; font-size: 11px; margin-top: auto; }
+  footer a { color: #3949ab; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔮 DQ10 タロットデッキ便利ツール</h1>
+</header>
+
+<div class="sticky-header">
+  <div id="warning-msg" class="warning-bar">⚠️ アルカナとモンスターの合計をそれぞれ20枚にしてください</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('arcana')">1. アルカナ</button>
+    <button class="tab-btn" onclick="switchTab('monster')">2. モンスター</button>
+    <button class="tab-btn" onclick="switchTab('exception')">3. アルカナ固定カード選択</button>
+    <button class="tab-btn" onclick="switchTab('result')">4. デッキ作成</button>
+    <button class="tab-btn" onclick="switchTab('storage')">5. デッキ保存/必要カード算出/最適化</button>
+  </div>
+  <div class="global-stats">
+    <div id="stat-arc-container" class="stat-box">アルカナ: <span id="stat-arc">0</span>/20</div>
+    <div id="stat-mon-container" class="stat-box">モンスター: <span id="stat-mon">0</span>/20</div>
+  </div>
+</div>
+
+<div class="container">
+  
+  <!-- TAB 1: Arcana -->
+  <div id="panel-arcana" class="panel active">
+    <div style="display:flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
+      <label style="margin-right: 10px; font-size: 12px; font-weight: bold; cursor: pointer;">
+        <input type="checkbox" id="chk-reset-opt" checked> オプションも初期化
+      </label>
+      <button class="btn-reset" onclick="resetTab('arcana')" style="margin: 0;">このタブをリセット</button>
+    </div>
+    <div class="info-box">
+      <b>オプションについて</b><br>
+      手札でオーラを作りやすくするための設定です。<br>
+      AとHを優先的に組ませ、DとHをできる限り減らすように設定されています。デフォルトは推奨の設定です。自由に変更してください。<br><br>
+      <b>H</b> (Hand): 手札に残りやすい・低頻度使用<br>
+      <b>A</b> (Aura): オーラ推奨<br>
+      <b>N</b> (Normal): デフォルト・高頻度使用<br>
+      <b>D</b> (Deprecated): オーラ非推奨（オーラ教皇のリジェネは教皇で延長できないため）
+    </div>
+    <table id="tbl-arcana">
+      <thead><tr><th>アルカナ</th><th>枚数</th><th>オプション</th></tr></thead>
+      <tbody id="tbody-arcana"></tbody>
+    </table>
+  </div>
+
+  <!-- TAB 2: Monster -->
+  <div id="panel-monster" class="panel">
+    <div style="display:flow-root;"><button class="btn-reset" onclick="resetTab('monster')">このタブをリセット</button></div>
+    <div class="info-box">
+      ※くさった死体以外のBランク以下は省略しています。(必要な場合は使わないカードで仮置きしてください。)<br>
+      Bランクのくさった死体には、攻撃系アルカナは自動では割り当てません。
+    </div>
+    <table id="tbl-monster"><tbody id="tbody-monster"></tbody></table>
+  </div>
+
+  <!-- TAB 3: Fixed -->
+  <div id="panel-exception" class="panel">
+    <div style="display:flow-root;"><button class="btn-reset" onclick="resetTab('exception')">このタブをリセット</button></div>
+    <div class="info-box">
+      モンスターのアルカナを固定します。未設定の場合自由に割り振られます。<br>
+      カードを消費しない効果やテンションが上がる効果など持つモンスターは固定を推奨しています。
+    </div>
+    <div id="exception-content"></div>
+  </div>
+
+  <!-- TAB 4: Result -->
+  <div id="panel-result" class="panel">
+    <button id="btn-run" class="btn-primary" onclick="runSingleOptimizeUI()">🔄 デッキ作成</button>
+    <div id="result-content" style="margin-top:20px;"></div>
+  </div>
+
+  <!-- TAB 5: Storage -->
+  <div id="panel-storage" class="panel">
+    <div class="info-box" style="background:#fff3e0; border-left-color:#ff9800;">
+      <b>⚡ 一括最適化機能</b><br>
+      カード枚数が最も少なく済む組み合わせに最適化します。くらやみハーピーなどの一部のパックからしか出ない使用頻度の高いモンスターを優先的に計算します。<br>
+      この機能は入っているアルカナやモンスターの枚数は変更せず、あくまで割り当てのみを変更します。
+    </div>
+    
+    <div style="margin-bottom:20px; display:flex; gap:10px;">
+      <input type="text" id="deck-name-input" class="save-input" placeholder="デッキ名 (例:汎用、万魔用)">
+      <button onclick="saveCurrentDeck()" style="padding:0 20px; background:var(--success); color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">保存</button>
+    </div>
+    
+    <div id="deck-list-container"></div>
+    
+    <div style="margin-top:30px; padding-top:20px; border-top:2px dashed #ccc;">
+      <div class="action-buttons">
+        <button class="btn-primary" style="background:#0288D1; flex:1;" onclick="calculateNeedsOnly()">📊 必要枚数を算出する</button>
+        <button class="btn-primary" style="background:#ef6c00; flex:2;" onclick="runGlobalOptimizationUI()">⚡ 複数のデッキの必要枚数を最適化する</button>
+        <button class="btn-primary" style="background:#757575; flex:1;" onclick="undoOptimization()">⏪ 一個前の状態に戻す</button>
+      </div>
+      <div id="global-result" style="margin-top:15px;"></div>
+    </div>
+    
+    <!-- エクスポート/インポート機能 -->
+    <div style="margin-top:40px; padding-top:20px; border-top:2px dashed #ccc;">
+      <b>💾 データのバックアップ (エクスポート/インポート)</b>
+      <textarea id="io-data" class="save-input" style="width:100%; height:60px; margin-top:10px; font-size:11px; font-family:monospace; line-height:1.2; resize:vertical;" placeholder="ここにデータが出力されます。復元する際もここにデータを貼り付けてください。"></textarea>
+      <div class="action-buttons" style="margin-top:8px;">
+        <button class="btn-primary" style="background:#424242; flex:1; padding:10px;" onclick="exportData()">📤 データを出力する</button>
+        <button class="btn-primary" style="background:#424242; flex:1; padding:10px;" onclick="importData()">📥 データを復元する</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- フッター（引用元表記） -->
+<footer>
+  ※本ツールのアルカナおよびモンスターの効果データは、<br>
+  <a href="https://wikiwiki.jp/dq10dic2nd/%E3%80%90%E3%83%A2%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%BF%E3%83%AD%E3%83%83%E3%83%88%E3%80%91#u55917ff" target="_blank" rel="noopener noreferrer">『DQ10大辞典を作ろうぜ！！第二版 Wiki』様のデータ</a> を引用・参考にさせていただいております。
+</footer>
+
+<script>
+const ATK_ARCANAS = ['罪人','死神','正義','戦車','塔'];
+const H_ARCANAS = ['悪魔','恋人','運命','女教皇','審判','女帝','月','星'];
+
+const ARCANA_DATA = [
+  {name:'隠者',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性単体攻撃<br>雷耐性低下付与'}, 
+  {name:'罪人',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性単体攻撃<br>敵に悪い効果があるほど威力上昇'}, 
+  {name:'死神',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性範囲攻撃<br>HP減少の呪い'}, 
+  {name:'正義',limit:4, color:'#ffebee', desc:'攻魔依存の光属性単体攻撃<br>敵が怒っていると威力上昇'}, 
+  {name:'戦車',limit:4, color:'#ffebee', desc:'攻撃力依存の無属性単体攻撃。<br>自分に良い効果があると威力上昇'}, 
+  {name:'塔',limit:4, color:'#ffebee', desc:'攻魔依存の雷属性範囲攻撃<br>闇耐性低下付与'},
+  {name:'悪魔',limit:4, color:'#e3f2fd', desc:'敵単体にテンションリンク'}, 
+  {name:'恋人',limit:4, color:'#e3f2fd', desc:'味方1人にテンションリンク(自分不可)'}, 
+  {name:'皇帝',limit:2, color:'#e3f2fd', desc:'味方1人にチャージ時間短縮(10秒/オーラ15秒)'}, 
+  {name:'世界',limit:4, color:'#e3f2fd', desc:'自分と周囲の味方にスペルガード'}, 
+  {name:'力',limit:4, color:'#e3f2fd', desc:'自分と周囲の味方バイキルト'},   
+  {name:'魔術師',limit:5, color:'#e3f2fd', desc:'味方1人にテンションを2段階上昇(自分不可)'},
+  {name:'運命',limit:4, color:'#e8f5e9', desc:'長射程単体蘇生 基礎10m'}, 
+  {name:'女教皇',limit:4, color:'#e8f5e9', desc:'仲間1人のHPを回復し、悪い効果を消す'}, 
+  {name:'教皇',limit:4, color:'#e8f5e9', desc:'自分と周囲の味方にスクルト＋リジェネ'}, 
+  {name:'審判',limit:2, color:'#e8f5e9', desc:'自分の周囲範囲蘇生 基礎8m'}, 
+  {name:'節制',limit:2, color:'#e8f5e9', desc:'自分と周囲の味方に3秒にMP(5/オーラ10)ずつ回復の効果'}, 
+  {name:'太陽',limit:2, color:'#e8f5e9', desc:'ベホマラー'},
+  {name:'愚者',limit:2, color:'#f3e5f5', desc:'被ダメージ1.2倍の陣'}, 
+  {name:'女帝',limit:4, color:'#f3e5f5', desc:'対象とその周囲の敵に魅了'}, 
+  {name:'月',limit:4, color:'#f3e5f5', desc:'幻惑効果の陣'},   
+  {name:'星',limit:4, color:'#f3e5f5', desc:'眠り効果の陣'}
+];
+
+const MONSTER_DATA = [
+  {name:'アトラス',rank:'SSS',limit:1,ex:true, desc:'使用時の会心率30%'}, {name:'バズズ',rank:'SSS',limit:1,ex:true, desc:'使用時50%でテンション消費しない'},
+  {name:'ベリアル',rank:'SSS',limit:1,ex:true, desc:'オーラが宿るとテンション上昇'}, {name:'バラモスゾンビ',rank:'SSS',limit:1,ex:true, desc:'使用時30%で手札に残る'},
+  {name:'バラモスブロス',rank:'SSS',limit:1,ex:true, desc:'使用時30%で手札に残る'}, {name:'キングヒドラ',rank:'SSS',limit:1,ex:true, desc:'オーラが宿ると使用時の攻撃ダメージ・回復量＋200%'},
+  {name:'アクバー',rank:'SSS',limit:1,ex:true, desc:'手札に入った時自分のHP30%回復'}, {name:'デュラン',rank:'SSS',limit:1,ex:true, desc:'自分のHPが全快なら使用時効果2回発動'},
+  {name:'ジャミラス',rank:'SSS',limit:1,ex:true, desc:'自分のHPが全快なら使用時の回復2倍'}, {name:'グラコス',rank:'SSS',limit:1,ex:true, desc:'手札に入った時自分のHP&MP10%回復'},
+  {name:'わたぼう',rank:'SS',limit:1,ex:true, desc:'戦闘開始時に必ず手札に入る'}, {name:'ワルぼう',rank:'SS',limit:1,ex:true, desc:'手札に入った時、他のタロットのオーラ条件の代わりになる'},
+  {name:'エンゼルスライム',rank:'SS',limit:2,ex:true, desc:'「エンゼルのみちびき」使用時に手札に呼べる'}, {name:'メカバーン',rank:'SS',limit:2,ex:false, desc:'受けるダメージ5減少'},
+  {name:'ネクロバルサ',rank:'SS',limit:2,ex:true, desc:'手札に入った時20%でテンション上昇'}, {name:'ゴールデンスライム',rank:'SS',limit:2,ex:false, desc:'最大HP+15'},
+  {name:'プラチナキング',rank:'SS',limit:2,ex:false, desc:'最大HP＋8'}, {name:'Sキラーマシン',rank:'SS',limit:2,ex:false, desc:'ちから+12'},
+  {name:'キラーマジンガ',rank:'SS',limit:2,ex:false, desc:'ちから＋8'}, {name:'ランプのまおう',rank:'SS',limit:2,ex:false, desc:'こうげき魔力+30'},
+  {name:'ヘルバトラー',rank:'SS',limit:2,ex:false, desc:'こうげき魔力＋24'}, {name:'メイデンドール',rank:'SS',limit:2,ex:false, desc:'かいふく魔力+30'},
+  {name:'レジェンドホース',rank:'SS',limit:2,ex:false, desc:'かいふく魔力＋25'},
+  {name:'くらやみハーピー',rank:'S',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲+0.5m、タロットの射程距離＋0.5m'}, {name:'ミケまどう',rank:'S',limit:2,ex:false, desc:'タロットの射程距離＋2m'},
+  {name:'マッドスミス',rank:'S',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲＋1m'}, {name:'メタルスライム',rank:'S',limit:5,ex:false, desc:'身かわし率＋0.3%'},
+  {name:'ゴールデンコーン',rank:'S',limit:5,ex:false, desc:'すばやさ＋8'}, {name:'つむりんママ',rank:'S',limit:5,ex:false, desc:'みのまもり＋4'},
+  {name:'メタルホイミン',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のHP25回復'}, {name:'ツンドラキー',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のMP12回復'},
+  {name:'ちょうろうじゅ',rank:'S',limit:5,ex:false, desc:'かいふく魔力＋8'}, {name:'ベビンゴサタン',rank:'S',limit:5,ex:false, desc:'こうげき魔力＋8'},
+  {name:'ムーンキメラ',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のHP12%回復'}, {name:'キラーピッケル',rank:'S',limit:5,ex:true, desc:'手札に入った時10%でテンション上昇'},
+  {name:'スイーツトロル',rank:'S',limit:5,ex:true, desc:'手札に入った時15%でテンション上昇'}, {name:'モッツァレーラ',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のMP50回復'},
+  {name:'ピンクボンボン',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時味方全員のHP12%回復'}, {name:'スウィートバッグ',rank:'S',limit:5,ex:true, desc:'使用時30%で手札に残る'},
+  {name:'死のカラステング',rank:'S',limit:5,ex:false, desc:'最大MP＋15'}, {name:'タイプG',rank:'S',limit:5,ex:false, desc:'ちから＋4'},
+  {name:'メタルキング',rank:'S',limit:5,ex:false, desc:'最大HP＋3'}, {name:'アスタロト',rank:'S',limit:5,ex:true, desc:'使用時20%でテンション消費しない'},
+  {name:'キングエレファント',rank:'S',limit:5,ex:true, desc:'使用時30%で効果2回発動'},
+  {name:'リビングデッド',rank:'A',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲＋0.3m'}, {name:'スライムタワー',rank:'A',limit:5,ex:false, desc:'身かわし率＋0.2%'},
+  {name:'ブラバニクイーン',rank:'A',limit:5,ex:false, desc:'すばやさ＋7'}, {name:'つららスライム',rank:'A',limit:5,ex:false, desc:'みのまもり＋3'},
+  {name:'ベホマスライム',rank:'A',limit:5,ex:false, desc:'使用時or引き直し時自分のHP20回復'}, {name:'ドラキーマ',rank:'A',limit:5,ex:false, desc:'使用時or引き直し時自分のMP10回復'},
+  {name:'エビルトレント',rank:'A',limit:5,ex:false, desc:'かいふく魔力＋5'}, {name:'ミニデーモン',rank:'A',limit:5,ex:false, desc:'こうげき魔力＋5'},
+  {name:'ダークペルシャ',rank:'A',limit:5,ex:false, desc:'タロットの射程距離＋0.5m'}, {name:'スターキメラ',rank:'A',limit:5,ex:false, desc:'使用時or引き直し時自分のHP5%回復'},
+  {name:'ブランマトック',rank:'A',limit:5,ex:false, desc:'手札に入った時5%でテンション上昇'}, {name:'トロルキング',rank:'A',limit:5,ex:false, desc:'手札に入った時10%でテンション上昇'},
+  {name:'くろカビこぞう',rank:'A',limit:5,ex:false, desc:'使用時or引き直し時自分のMP30回復'}, {name:'ファーラット',rank:'A',limit:5,ex:false, desc:'使用時or引き直し時味方全員のHP5%回復'},
+  {name:'おどるほうせき',rank:'A',limit:5,ex:false, desc:'使用時10%で手札に残る'}, {name:'ガーゴイル',rank:'A',limit:5,ex:false, desc:'最大MP＋5'},
+  {name:'キラーマシン',rank:'A',limit:5,ex:false, desc:'ちから＋3'}, {name:'クイーンスライム',rank:'A',limit:5,ex:false, desc:'最大HP＋2'},
+  {name:'エメラルドーン',rank:'A',limit:5,ex:false, desc:'使用時10%でテンション消費しない'}, {name:'ガネーシャエビル',rank:'A',limit:5,ex:false, desc:'使用時10%で効果2回発動'},
+  {name:'くさった死体',rank:'B',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲＋0.1m'}
+];
+
+const RARITY_WEIGHT = {
+  'くらやみハーピー': 100000, 'ゴールデンスライム': 100000, 'Sキラーマシン': 100000,
+  'メカバーン': 50000, 'プラチナキング': 50000
+};
+function getWeight(mName) {
+  if(RARITY_WEIGHT[mName]) return RARITY_WEIGHT[mName];
+  const rank = MONSTER_DATA.find(m=>m.name===mName).rank;
+  if(rank === 'SSS') return 1000;
+  if(rank === 'SS') return 500;
+  if(rank === 'S') return 100;
+  if(rank === 'A') return 10;
+  return 1;
+}
+
+// ================= STATE =================
+let appState = { arcanaCounts: {}, arcanaPriorities: {}, monsterCounts: {}, exceptionData: {}, optimizedResult: {} };
+let savedDecks = [];
+let backupDecks = null; // Undo用
+let activeTabId = 'arcana';
+
+window.onload = () => {
+  const s = localStorage.getItem('dq10_v54_state'); if(s) appState = JSON.parse(s); else resetStateBase();
+  const d = localStorage.getItem('dq10_v54_decks'); if(d) savedDecks = JSON.parse(d);
+  renderAll();
+};
+
+function resetStateBase() {
+  ARCANA_DATA.forEach(a => {
+    appState.arcanaCounts[a.name] = 0;
+    let p = 'N'; if(ATK_ARCANAS.includes(a.name)) p = 'A'; else if(a.name === '教皇') p = 'D'; else if(H_ARCANAS.includes(a.name)) p = 'H';
+    appState.arcanaPriorities[a.name] = p;
+  });
+  appState.monsterCounts = {}; appState.exceptionData = {}; appState.optimizedResult = {};
+}
+
+function resetTab(tabId) {
+  if(!confirm('現在のタブの内容のみをリセットしますか？')) return;
+  if(tabId === 'arcana') {
+    const resetOpt = document.getElementById('chk-reset-opt').checked;
+    ARCANA_DATA.forEach(a => {
+      appState.arcanaCounts[a.name] = 0;
+      if(resetOpt) {
+        let p = 'N'; if(ATK_ARCANAS.includes(a.name)) p = 'A'; else if(a.name === '教皇') p = 'D'; else if(H_ARCANAS.includes(a.name)) p = 'H';
+        appState.arcanaPriorities[a.name] = p;
+      }
+    });
+  } else if(tabId === 'monster') {
+    appState.monsterCounts = {}; appState.exceptionData = {};
+  } else if(tabId === 'exception') {
+    appState.exceptionData = {};
+  }
+  saveData(); renderAll();
+}
+
+function saveData() { localStorage.setItem('dq10_v54_state', JSON.stringify(appState)); updateStats(); }
+
+function updateStats() {
+  let aCount = Object.values(appState.arcanaCounts).reduce((a,b)=>a+b,0);
+  let mCount = Object.values(appState.monsterCounts).reduce((a,b)=>a+b,0);
+  
+  let arcEl = document.getElementById('stat-arc');
+  let monEl = document.getElementById('stat-mon');
+  let arcCont = document.getElementById('stat-arc-container');
+  let monCont = document.getElementById('stat-mon-container');
+  
+  arcEl.textContent = aCount; monEl.textContent = mCount;
+  
+  if(aCount === 20) arcCont.classList.add('ok'); else arcCont.classList.remove('ok');
+  if(mCount === 20) monCont.classList.add('ok'); else monCont.classList.remove('ok');
+
+  const warn = document.getElementById('warning-msg');
+  const btn = document.getElementById('btn-run');
+  if(aCount !== 20 || mCount !== 20) { 
+    btn.disabled = true; 
+    if(activeTabId === 'result') warn.style.display = 'block'; else warn.style.display = 'none';
+  } else { 
+    btn.disabled = false; 
+    warn.style.display = 'none'; 
+  }
+}
+
+function toggleDesc(id) {
+  const el = document.getElementById(id);
+  if(el) el.style.display = (el.style.display === 'none') ? 'table-row' : 'none';
+}
+
+// ================= RENDER =================
+function renderAll() { renderArcana(); renderMonster(); renderException(); renderDeckList(); }
+
+function renderArcana() {
+  const tbody = document.getElementById('tbody-arcana'); tbody.innerHTML = '';
+  ARCANA_DATA.forEach(a => {
+    const cnt = appState.arcanaCounts[a.name] || 0; const prio = appState.arcanaPriorities[a.name];
+    const tr = document.createElement('tr'); tr.style.backgroundColor = a.color; tr.className = 'click-row';
+    tr.onclick = () => toggleDesc('arc-desc-' + a.name);
+    tr.innerHTML = `<td><b>${a.name}</b></td>
+      <td><div style="display:flex; align-items:center;">
+      <button class="btn-count btn-minus" onclick="event.stopPropagation(); modArc('${a.name}', -1, ${a.limit})">－</button>
+      <span class="val-display">${cnt}</span>
+      <button class="btn-count btn-plus" onclick="event.stopPropagation(); modArc('${a.name}', 1, ${a.limit})">＋</button></div></td>
+      <td><div class="prio-group">${['H','A','N','D'].map(x => `<button class="prio-btn ${prio===x?'active-'+x:''}" onclick="event.stopPropagation(); setPrio('${a.name}', '${x}')">${x}</button>`).join('')}</div></td>`;
+    tbody.appendChild(tr);
+    
+    const trDesc = document.createElement('tr'); trDesc.id = 'arc-desc-' + a.name; trDesc.className = 'desc-row'; trDesc.style.display = 'none';
+    trDesc.innerHTML = `<td colspan="3">${a.desc}</td>`;
+    tbody.appendChild(trDesc);
+  });
+  updateStats();
+}
+function modArc(name, d, limit) { let v = (appState.arcanaCounts[name] || 0) + d; if(v < 0) v = 0; if(v > limit) v = limit; appState.arcanaCounts[name] = v; saveData(); renderArcana(); }
+function setPrio(name, p) { appState.arcanaPriorities[name] = p; saveData(); renderArcana(); }
+
+function renderMonster() {
+  const tbody = document.getElementById('tbody-monster'); tbody.innerHTML = ''; let lastRank = '';
+  MONSTER_DATA.forEach(m => {
+    if(m.rank !== lastRank) { const trH = document.createElement('tr'); trH.innerHTML = `<td colspan="2" style="background:#eee; font-weight:bold; font-size:11px; padding:6px;">▼ ${m.rank}ランク</td>`; tbody.appendChild(trH); lastRank = m.rank; }
+    
+    if(m.name === 'バラモスゾンビ' || m.name === 'アクバー') {
+      const trLine = document.createElement('tr'); 
+      trLine.innerHTML = `<td colspan="2" style="border-top: 2px dashed #9fa8da; padding: 0; height: 0;"></td>`; 
+      tbody.appendChild(trLine);
+    }
+
+    const cnt = appState.monsterCounts[m.name] || 0; const tr = document.createElement('tr'); 
+    if(cnt > 0) tr.style.backgroundColor = '#e8f5e9'; else tr.style.backgroundColor = '#fff';
+    tr.className = 'click-row';
+    tr.onclick = () => toggleDesc('mon-desc-' + m.name);
+    
+    tr.innerHTML = `<td><span class="rank-badge rk-${m.rank}">${m.rank}</span> <b>${m.name}</b></td>
+      <td style="text-align:right;"><div style="display:flex; align-items:center; justify-content:flex-end;">
+      <button class="btn-count btn-minus" onclick="event.stopPropagation(); modMon('${m.name}', -1, ${m.limit})">－</button>
+      <span class="val-display">${cnt}</span><button class="btn-count btn-plus" onclick="event.stopPropagation(); modMon('${m.name}', 1, ${m.limit})">＋</button></div></td>`;
+    tbody.appendChild(tr);
+    
+    const trDesc = document.createElement('tr'); trDesc.id = 'mon-desc-' + m.name; trDesc.className = 'desc-row'; trDesc.style.display = 'none';
+    trDesc.innerHTML = `<td colspan="2">${m.desc}</td>`;
+    tbody.appendChild(trDesc);
+  });
+  updateStats();
+}
+function modMon(name, d, limit) { let v = (appState.monsterCounts[name] || 0) + d; if(v < 0) v = 0; if(v > limit) v = limit; appState.monsterCounts[name] = v; saveData(); renderMonster(); renderException(); }
+
+function renderException() {
+  const c = document.getElementById('exception-content'); c.innerHTML = '';
+  const am = MONSTER_DATA.filter(m => (appState.monsterCounts[m.name] || 0) > 0);
+  if(am.length === 0) { c.innerHTML = '<div style="padding:15px; text-align:center; color:#888; background:#fff; border-radius:6px; border:1px solid #eee;">モンスターが選択されていません</div>'; return; }
+  am.sort((a,b) => (b.ex ? 1 : 0) - (a.ex ? 1 : 0));
+  
+  let html = '<table><thead><tr><th style="width:140px;">モンスター</th><th>固定アルカナ</th></tr></thead><tbody>';
+  am.forEach(m => {
+    const cnt = appState.monsterCounts[m.name]; let selHTML = '';
+    for(let i=0; i<cnt; i++) {
+      const savedVal = (appState.exceptionData[m.name] || [])[i] || ''; const color = getArcanaColor(savedVal);
+      let opts = `<option value="">(自動)</option>`;
+      ARCANA_DATA.filter(a => appState.arcanaCounts[a.name] > 0).forEach(a => { opts += `<option value="${a.name}" ${savedVal===a.name?'selected':''} style="background:${a.color}">${a.name}</option>`; });
+      selHTML += `<select onchange="updateEx('${m.name}', ${i}, this)" style="margin-bottom:4px; display:block; background:${color}; width:100%; border:1px solid #ccc; padding:6px; font-weight:bold;">${opts}</select>`;
+    }
+    let bg = m.ex ? '#fff9c4' : '#fff';
+    html += `<tr style="background:${bg};"><td><b>${m.name}</b>${m.ex?'<br><span class="ex-tag">推奨</span>':''}</td><td>${selHTML}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  c.innerHTML = html;
+}
+function updateEx(mName, idx, el) { if(!appState.exceptionData[mName]) appState.exceptionData[mName] = []; appState.exceptionData[mName][idx] = el.value; el.style.backgroundColor = getArcanaColor(el.value); saveData(); }
+function getArcanaColor(name) { const f = ARCANA_DATA.find(a=>a.name===name); return f ? f.color : '#fff'; }
+
+// ================= LOGIC CORE =================
+function getPairScore(t1, t2, isLimit5) {
+  if(isLimit5) {
+    let score = 0;
+    if(t1 === 'D') score -= 50;
+    if(t2 === 'D') score -= 50;
+    return score;
+  }
+  
+  if (!t1 || !t2) return 0; const p = [t1, t2].sort().join('');
+  if (p === 'AH' || p === 'DN') return 0;
+  if (p === 'AD' || p === 'AN' || p === 'HN' || p === 'NN') return 100;
+  if (p === 'AA' || p === 'HH') return 10000;
+  if (p === 'DH') return 100000;
+  return 1000;
+}
+
+function getPermutations(arr) {
+  if (arr.length <= 1) return [arr]; let perms = [];
+  for (let i = 0; i < arr.length; i++) {
+    let rest = arr.slice(0, i).concat(arr.slice(i + 1));
+    let restPerms = getPermutations(rest);
+    for (let p of restPerms) perms.push([arr[i]].concat(p));
+  }
+  return perms;
+}
+
+function buildDeckData(state) {
+  let pool = { A:0, N:0, D:0, H:0 }; let poolNames = { A:[], N:[], D:[], H:[] };
+  for(let aName in state.arcanaCounts) {
+    let type = state.arcanaPriorities[aName] || 'N'; pool[type] += state.arcanaCounts[aName];
+    for(let i=0; i<state.arcanaCounts[aName]; i++) poolNames[type].push(aName);
+  }
+  let pairs = []; let unassignedSlots = [];
+  MONSTER_DATA.forEach(m => {
+    let count = state.monsterCounts[m.name] || 0; if(count === 0) return;
+    let isB = (m.rank === 'B'); let isLimit5 = (m.limit === 5); let fixed = state.exceptionData[m.name] || [];
+    for(let i=0; i<count; i+=2) {
+      let slot1 = { mName: m.name, isB: isB, isLimit5: isLimit5, type: null, fixedName: null, idx: i };
+      let slot2 = (i + 1 < count) ? { mName: m.name, isB: isB, isLimit5: isLimit5, type: null, fixedName: null, idx: i+1 } : null;
+      if(fixed[i] && poolNames[state.arcanaPriorities[fixed[i]]].includes(fixed[i])) {
+        slot1.fixedName = fixed[i]; slot1.type = state.arcanaPriorities[fixed[i]];
+        pool[slot1.type]--; poolNames[slot1.type].splice(poolNames[slot1.type].indexOf(fixed[i]), 1);
+      }
+      if(slot2 && fixed[i+1] && poolNames[state.arcanaPriorities[fixed[i+1]]].includes(fixed[i+1])) {
+        slot2.fixedName = fixed[i+1]; slot2.type = state.arcanaPriorities[fixed[i+1]];
+        pool[slot2.type]--; poolNames[slot2.type].splice(poolNames[slot2.type].indexOf(fixed[i+1]), 1);
+      }
+      pairs.push([slot1, slot2]);
+      if(!slot1.fixedName) unassignedSlots.push(slot1);
+      if(slot2 && !slot2.fixedName) unassignedSlots.push(slot2);
+    }
+  });
+  return { state, pool, poolNames, pairs, unassignedSlots };
+}
+
+function dfsBestScore(pairs, pool) {
+  let memo = {}; // 呼び出しごとに毎回リフレッシュ（汚染防止）
+  
+  function solve(pairIdx, curA, curN, curD, curH) {
+    if (pairIdx === pairs.length) return { score: 0, assignment: [] };
+    let key = `${pairIdx}_${curA}_${curN}_${curD}_${curH}`;
+    if (memo[key] !== undefined) return memo[key];
+
+    let p1 = pairs[pairIdx][0], p2 = pairs[pairIdx][1];
+    let isB = p1.isB; let isLim5 = p1.isLimit5;
+    let curPool = { A: curA, N: curN, D: curD, H: curH };
+    let cands = [];
+
+    const canUse = (t) => { return !(isB && t === 'A'); };
+    const canPair = (t1, t2) => {
+      if(isLim5) return true; 
+      if(t1 === 'D' && t2 === 'H') return false;
+      if(t1 === 'H' && t2 === 'D') return false;
+      return true;
+    };
+
+    if (p2 === null) {
+      if (p1.type !== null) cands.push([p1.type, null]);
+      else ['A','N','D','H'].forEach(t => { if (curPool[t] > 0 && canUse(t)) cands.push([t, null]); });
+    } else {
+      if (p1.type !== null && p2.type !== null) cands.push([p1.type, p2.type]);
+      else if (p1.type !== null && p2.type === null) {
+        ['A','N','D','H'].forEach(t => { if (curPool[t] > 0 && canUse(t) && canPair(p1.type, t)) cands.push([p1.type, t]); });
+      } else if (p1.type === null && p2.type !== null) {
+        ['A','N','D','H'].forEach(t => { if (curPool[t] > 0 && canUse(t) && canPair(t, p2.type)) cands.push([t, p2.type]); });
+      } else {
+        let types = ['A','N','D','H'];
+        for(let i=0; i<4; i++) {
+          for(let j=i; j<4; j++) {
+            let t1 = types[i], t2 = types[j];
+            if (!canUse(t1) || !canUse(t2)) continue;
+            if (!canPair(t1, t2)) continue;
+            if (t1 === t2) { if (curPool[t1] >= 2) cands.push([t1, t2]); }
+            else { if (curPool[t1] >= 1 && curPool[t2] >= 1) cands.push([t1, t2]); }
+          }
+        }
+      }
+    }
+
+    let bestScore = Infinity; let bestAssign = null;
+    for (let c of cands) {
+      let cost1 = (p1.type === null) ? c[0] : null; let cost2 = (p2 !== null && p2.type === null) ? c[1] : null;
+      if (cost1) curPool[cost1]--; if (cost2) curPool[cost2]--;
+      
+      let res = solve(pairIdx + 1, curPool.A, curPool.N, curPool.D, curPool.H);
+      if (res.score !== Infinity) {
+        let total = getPairScore(c[0], c[1], isLim5) + res.score;
+        if (total < bestScore) { bestScore = total; bestAssign = [c].concat(res.assignment); }
+      }
+      
+      if (cost1) curPool[cost1]++; if (cost2) curPool[cost2]++;
+    }
+    memo[key] = { score: bestScore, assignment: bestAssign };
+    return memo[key];
+  }
+  return solve(0, pool.A, pool.N, pool.D, pool.H);
+}
+
+function optimizeSingleDeck(deck) {
+  let dd = buildDeckData(deck.state);
+  
+  let bNeed = 0; dd.unassignedSlots.forEach(s => { if(s.isB) bNeed++; });
+  if(bNeed > (dd.pool['N'] + dd.pool['D'] + dd.pool['H'])) return { error: true, msg: "Bランクに割り当てられるA以外のカードが不足しています。" };
+
+  let res = dfsBestScore(dd.pairs, dd.pool);
+  if(res.score === Infinity) return { error: true, msg: "禁止ルールを回避できる組み合わせが存在しません。" };
+
+  let resMap = {};
+  for(let i=0; i<dd.pairs.length; i++) {
+    let p1 = dd.pairs[i][0], p2 = dd.pairs[i][1]; let t1 = res.assignment[i][0], t2 = res.assignment[i][1];
+    if(!resMap[p1.mName]) resMap[p1.mName] = [];
+    resMap[p1.mName][p1.idx] = p1.fixedName ? p1.fixedName : dd.poolNames[t1].pop();
+    if(p2) {
+      if(!resMap[p2.mName]) resMap[p2.mName] = [];
+      resMap[p2.mName][p2.idx] = p2.fixedName ? p2.fixedName : dd.poolNames[t2].pop();
+    }
+  }
+  return { error: false, map: resMap, score: res.score };
+}
+
+// ================= RUN UI =================
+async function runSingleOptimizeUI() {
+  const c = document.getElementById('result-content'); c.innerHTML = '<div class="loading">デッキ作成中...</div>';
+  await new Promise(r => setTimeout(r, 10));
+  let res = optimizeSingleDeck({state: appState});
+  if(res.error) { c.innerHTML = `<span style="color:red; font-weight:bold;">エラー: ${res.msg}</span>`; return; }
+  appState.optimizedResult = {}; for(let m in res.map) appState.optimizedResult[m] = res.map[m].filter(x=>x); saveData();
+  renderResult(appState.optimizedResult, c, appState);
+}
+
+function renderResult(map, container, state) {
+  let html = '<table><thead><tr><th>モンスター</th><th>構成</th></tr></thead><tbody>';
+  MONSTER_DATA.forEach(m => {
+    if(map[m.name]) {
+      let badges = map[m.name].map(name => `<span class="res-card res-${state.arcanaPriorities[name]||'N'}">${name}</span>`).join('');
+      html += `<tr><td><b>${m.name}</b> <span class="rank-badge rk-${m.rank}">${m.rank}</span></td><td>${badges}</td></tr>`;
+    }
+  });
+  container.innerHTML = html + '</tbody></table>';
+}
+
+function calculateNeedsOnly() {
+  const output = document.getElementById('global-result');
+  if(savedDecks.length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">保存デッキがありません</span>'; return; }
+  
+  let finalGlobalNeeds = {};
+  savedDecks.forEach(d => {
+    if(!d.state.optimizedResult || Object.keys(d.state.optimizedResult).length === 0) return; 
+    for(let mName in d.state.optimizedResult) {
+      if(!finalGlobalNeeds[mName]) finalGlobalNeeds[mName] = {}; let localCounts = {};
+      d.state.optimizedResult[mName].forEach(c => localCounts[c] = (localCounts[c]||0)+1);
+      for(let c in localCounts) finalGlobalNeeds[mName][c] = Math.max(finalGlobalNeeds[mName][c] || 0, localCounts[c]);
+    }
+  });
+  if(Object.keys(finalGlobalNeeds).length === 0) {
+    output.innerHTML = '<span style="color:red; font-weight:bold;">すべてのデッキが未作成（計算前）です。</span>'; return;
+  }
+  renderCardList(finalGlobalNeeds, output, "📊 現在の必要カードリスト");
+}
+
+function undoOptimization() {
+  if(!backupDecks) { alert("戻せる履歴がありません。"); return; }
+  savedDecks = JSON.parse(JSON.stringify(backupDecks));
+  localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks));
+  renderDeckList();
+  document.getElementById('global-result').innerHTML = '<span style="color:var(--success); font-weight:bold;">一個前の状態に復元しました。</span>';
+}
+
+async function runGlobalOptimizationUI() {
+  const output = document.getElementById('global-result');
+  if(savedDecks.length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">保存デッキがありません</span>'; return; }
+  
+  backupDecks = JSON.parse(JSON.stringify(savedDecks));
+  
+  output.innerHTML = '<div class="loading">Step 1: 各デッキの絶対防衛ライン(最高の美しさ)を算出中...</div>';
+  await new Promise(r => setTimeout(r, 10));
+  
+  let initialBestScores = [];
+  for(let i=0; i<savedDecks.length; i++) {
+    let dd = buildDeckData(savedDecks[i].state); 
+    let res = dfsBestScore(dd.pairs, dd.pool);
+    if(res.score === Infinity) { output.innerHTML = `<span style="color:red; font-weight:bold;">デッキ「${savedDecks[i].name}」のエラー: 禁止ペアを回避できません。手動で構成を見直してください。</span>`; return; }
+    initialBestScores.push(res.score);
+  }
+  
+  output.innerHTML = '<div class="loading">Step 2: 究極・全ルートシミュレーションを実行中...<br><small>（最適解を検索中です。数秒かかります）</small></div>';
+  await new Promise(r => setTimeout(r, 10));
+
+  let mSet = new Set();
+  savedDecks.forEach(d => { let dd = buildDeckData(d.state); dd.unassignedSlots.forEach(s => mSet.add(s.mName)); });
+  let allUsedMonsters = Array.from(mSet);
+  
+  let rareMonsters = allUsedMonsters.filter(m => getWeight(m) >= 50000);
+  let normalMonsters = allUsedMonsters.filter(m => getWeight(m) < 50000).sort((a,b) => getWeight(b) - getWeight(a));
+  
+  let rarePerms = getPermutations(rareMonsters);
+  if(rarePerms.length === 0) rarePerms = [[]]; 
+  
+  let bestGlobalCost = Infinity;
+  let bestResultMaps = null;
+
+  for(let perm of rarePerms) {
+    let simDecks = savedDecks.map((d, i) => {
+      let dd = buildDeckData(d.state); dd.bestScore = initialBestScores[i]; return dd;
+    });
+    
+    let processOrder = perm.concat(normalMonsters);
+    
+    for(let mName of processOrder) {
+      let maxNeeded = Math.max(...simDecks.map(dd => dd.unassignedSlots.filter(s => s.mName === mName).length));
+      if(maxNeeded === 0) continue;
+      
+      for(let slotIdx = 0; slotIdx < maxNeeded; slotIdx++) {
+        let targetDecks = simDecks.filter(dd => dd.unassignedSlots.filter(s => s.mName === mName).length > slotIdx);
+        if(targetDecks.length === 0) continue;
+        
+        let arcanaFreq = {};
+        targetDecks.forEach(dd => {
+          let uniqueArcs = new Set();
+          for(let type in dd.poolNames) dd.poolNames[type].forEach(a => uniqueArcs.add(a));
+          uniqueArcs.forEach(a => { arcanaFreq[a] = (arcanaFreq[a] || 0) + 1; });
+        });
+        let candidates = Object.keys(arcanaFreq).sort((a,b) => arcanaFreq[b] - arcanaFreq[a]);
+        
+        let bestCandidate = null; let maxAppliedDecks = -1;
+        
+        for(let cand of candidates) {
+          let appliedDecks = []; let type = savedDecks[0].state.arcanaPriorities[cand];
+          
+          for(let i=0; i<targetDecks.length; i++) {
+            let dd = targetDecks[i];
+            
+            if(!dd.poolNames[type].includes(cand)) continue; 
+            let slot = dd.unassignedSlots.filter(s => s.mName === mName)[slotIdx];
+            if(slot.isB && type === 'A') continue; 
+            
+            slot.fixedName = cand; slot.type = type; dd.pool[type]--;
+            let testRes = dfsBestScore(dd.pairs, dd.pool);
+            if(testRes.score <= dd.bestScore) appliedDecks.push(dd); 
+            slot.fixedName = null; slot.type = null; dd.pool[type]++;
+          }
+          if(appliedDecks.length > maxAppliedDecks) { maxAppliedDecks = appliedDecks.length; bestCandidate = { name: cand, type: type, decks: appliedDecks }; }
+          if(maxAppliedDecks === targetDecks.length) break; 
+        }
+        
+        if(bestCandidate && bestCandidate.decks.length > 0) {
+          bestCandidate.decks.forEach(dd => {
+            let slot = dd.unassignedSlots.filter(s => s.mName === mName)[slotIdx];
+            slot.fixedName = bestCandidate.name; slot.type = bestCandidate.type;
+            dd.pool[bestCandidate.type]--; dd.poolNames[bestCandidate.type].splice(dd.poolNames[bestCandidate.type].indexOf(bestCandidate.name), 1);
+          });
+        }
+      }
+    }
+    
+    let simResultMaps = [];
+    let isValidRoute = true;
+    simDecks.forEach((dd) => {
+      let res = dfsBestScore(dd.pairs, dd.pool);
+      if(res.score === Infinity) { isValidRoute = false; return; }
+      let resMap = {};
+      for(let j=0; j<dd.pairs.length; j++) {
+        let p1 = dd.pairs[j][0], p2 = dd.pairs[j][1]; let t1 = res.assignment[j][0], t2 = res.assignment[j][1];
+        if(!resMap[p1.mName]) resMap[p1.mName] = []; resMap[p1.mName][p1.idx] = p1.fixedName ? p1.fixedName : dd.poolNames[t1].pop();
+        if(p2) { if(!resMap[p2.mName]) resMap[p2.mName] = []; resMap[p2.mName][p2.idx] = p2.fixedName ? p2.fixedName : dd.poolNames[t2].pop(); }
+      }
+      simResultMaps.push(resMap);
+    });
+    if(!isValidRoute) continue;
+    
+    let globalNeeds = {};
+    simResultMaps.forEach(resMap => {
+      for(let m in resMap) {
+        if(!globalNeeds[m]) globalNeeds[m] = {}; let localCounts = {};
+        resMap[m].forEach(c => localCounts[c] = (localCounts[c]||0)+1);
+        for(let c in localCounts) globalNeeds[m][c] = Math.max(globalNeeds[m][c] || 0, localCounts[c]);
+      }
+    });
+    
+    let currentCost = 0;
+    for(let m in globalNeeds) {
+      let weight = getWeight(m);
+      let count = Object.values(globalNeeds[m]).reduce((a,b)=>a+b,0);
+      currentCost += weight * count; 
+    }
+    
+    if(currentCost < bestGlobalCost) { bestGlobalCost = currentCost; bestResultMaps = simResultMaps; }
+  }
+
+  if(!bestResultMaps) {
+    output.innerHTML = '<span style="color:red; font-weight:bold;">最適化に失敗しました。（エラー発生）</span>'; return;
+  }
+
+  savedDecks.forEach((d, i) => { d.state.optimizedResult = bestResultMaps[i]; });
+  localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderDeckList();
+
+  let finalGlobalNeeds = {};
+  savedDecks.forEach(d => {
+    for(let mName in d.state.optimizedResult) {
+      if(!finalGlobalNeeds[mName]) finalGlobalNeeds[mName] = {}; let localCounts = {};
+      d.state.optimizedResult[mName].forEach(c => localCounts[c] = (localCounts[c]||0)+1);
+      for(let c in localCounts) finalGlobalNeeds[mName][c] = Math.max(finalGlobalNeeds[mName][c] || 0, localCounts[c]);
+    }
+  });
+  
+  renderCardList(finalGlobalNeeds, output, "🎴 最適化完了: 必要カードリスト");
+}
+
+function renderCardList(needsMap, container, title) {
+  let html = `<div style="background:#fff; border:2px solid #ddd; border-radius:6px; padding:15px;"><h3 style="margin-top:0; color:#2E7D32;">${title}</h3>`;
+  const finalSorted = Object.keys(needsMap).sort((a,b) => getWeight(b) - getWeight(a));
+  
+  const arcanaOrder = {};
+  ARCANA_DATA.forEach((a, idx) => { arcanaOrder[a.name] = idx; });
+
+  finalSorted.forEach(m => {
+    let cardsHtml = ''; 
+    let sortedArcanas = Object.keys(needsMap[m]).sort((a, b) => arcanaOrder[a] - arcanaOrder[b]);
+    for(let c of sortedArcanas) {
+      cardsHtml += `<span class="res-card" style="background:${getArcanaColor(c)}; font-size:12px;">${c} x${needsMap[m][c]}</span>`;
+    }
+    html += `<div class="opt-res-row"><div class="opt-res-mon">${m}</div><div>${cardsHtml}</div></div>`;
+  }); 
+  html += '</div>'; container.innerHTML = html;
+}
+
+// ================= EXPORT / IMPORT =================
+function exportData() {
+  const data = { state: appState, decks: savedDecks };
+  try {
+    const shortObj = { 
+      s: { a: data.state.arcanaCounts, p: data.state.arcanaPriorities, m: data.state.monsterCounts, e: data.state.exceptionData }, 
+      d: data.decks.map(d => ({ n: d.name, a: d.state.arcanaCounts, p: d.state.arcanaPriorities, m: d.state.monsterCounts, e: d.state.exceptionData, o: d.state.optimizedResult })) 
+    };
+    const compressed = btoa(unescape(encodeURIComponent(JSON.stringify(shortObj))));
+    document.getElementById('io-data').value = compressed;
+    alert("データを出力しました。テキストをコピーして保存してください。");
+  } catch(e) { alert("エクスポートに失敗しました。"); }
+}
+
+function importData() {
+  const text = document.getElementById('io-data').value.trim();
+  if(!text) { alert("データが入力されていません。"); return; }
+  try {
+    let parsed;
+    if(text.startsWith('{')) {
+      parsed = JSON.parse(text);
+      if(parsed.state && parsed.decks) { appState = parsed.state; savedDecks = parsed.decks; } else throw new Error();
+    } else {
+      const shortObj = JSON.parse(decodeURIComponent(escape(atob(text))));
+      appState = { arcanaCounts: shortObj.s.a||{}, arcanaPriorities: shortObj.s.p||{}, monsterCounts: shortObj.s.m||{}, exceptionData: shortObj.s.e||{}, optimizedResult: {} };
+      savedDecks = shortObj.d.map(d => ({ name: d.n, state: { arcanaCounts: d.a||{}, arcanaPriorities: d.p||{}, monsterCounts: d.m||{}, exceptionData: d.e||{}, optimizedResult: d.o||{} } }));
+    }
+    if(!confirm("現在のデータはすべて上書きされます。よろしいですか？")) return;
+    saveData(); localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderAll();
+    alert("データを復元しました。");
+  } catch(e) { alert("読み込みエラー: 正しいデータ形式ではありません。"); }
+}
+
+// ================= STORAGE =================
+function renderDeckList() {
+  const c = document.getElementById('deck-list-container'); c.innerHTML = '';
+  savedDecks.forEach((d, i) => {
+    const item = document.createElement('div'); item.className = 'deck-item'; let contentHtml = '';
+    if(d.state.optimizedResult && Object.keys(d.state.optimizedResult).length > 0) {
+      for(let m in d.state.optimizedResult) {
+        let cards = d.state.optimizedResult[m].map(name => `<span class="res-card res-${d.state.arcanaPriorities[name]||'N'}" style="font-weight:normal;">${name}</span>`).join('');
+        contentHtml += `<div class="opt-res-row"><div class="opt-res-mon">${m}</div><div>${cards}</div></div>`;
+      }
+    } else contentHtml = '<span style="color:#999; font-weight:bold;">構成がまだ作成されていません</span>';
+    item.innerHTML = `<div class="deck-header" onclick="toggleDeck(${i})"><span class="deck-name">${d.name}</span>
+      <div><button onclick="event.stopPropagation(); loadDeck(${i})" style="padding:6px 10px; cursor:pointer; background:#e3f2fd; border:1px solid #90caf9; border-radius:4px; font-weight:bold; color:#1565c0;">読込</button>
+      <button onclick="event.stopPropagation(); deleteDeck(${i})" style="padding:6px 10px; background:#c62828; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; margin-left:4px;">削除</button></div></div>
+      <div id="deck-body-${i}" class="deck-body">${contentHtml}</div>`; c.appendChild(item);
+  });
+}
+function toggleDeck(i) { document.getElementById(`deck-body-${i}`).classList.toggle('open'); }
+function saveCurrentDeck() {
+  const name = document.getElementById('deck-name-input').value || `マイデッキ ${savedDecks.length+1}`;
+  savedDecks.push({ name: name, state: JSON.parse(JSON.stringify(appState)) }); localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderDeckList(); document.getElementById('deck-name-input').value = '';
+}
+function loadDeck(i) { if(!confirm(`「${savedDecks[i].name}」を読み込みますか？`)) return; appState = JSON.parse(JSON.stringify(savedDecks[i].state)); saveData(); renderAll(); switchTab('arcana'); }
+function deleteDeck(i) { if(!confirm(`削除しますか？`)) return; savedDecks.splice(i, 1); localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderDeckList(); }
+function switchTab(id) { 
+  activeTabId = id;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); 
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+  document.getElementById('panel-' + id).classList.add('active'); 
+  document.querySelector(`button[onclick="switchTab('${id}')"]`).classList.add('active'); 
+  if(id === 'exception') renderException(); 
+  if(id === 'storage') renderDeckList(); 
+  updateStats();
+}
+</script>
+</body>
+</html>
