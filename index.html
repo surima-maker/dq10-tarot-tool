@@ -180,16 +180,24 @@
       <button class="btn-reset" onclick="resetTab('arcana')" style="margin: 0;">このタブをリセット</button>
     </div>
     <div class="info-box">
-      <b>オーラオプションについて</b><br>
+      <b>オプションについて</b><br>
       手札でオーラを作りやすくするための設定です。<br>
       AとHを優先的に組ませ、DとHをできる限り減らすように設定されています。デフォルトは推奨の設定です。自由に変更してください。<br><br>
       <b>H</b> (Hand): 手札に残りやすい・低頻度使用<br>
       <b>A</b> (Aura): オーラ推奨<br>
       <b>N</b> (Normal): デフォルト・高頻度使用<br>
       <b>D</b> (Deprecated): オーラ非推奨（オーラ教皇のリジェネは教皇で延長できないため）
+      
+      <!-- ↓↓↓ 追加部分 ↓↓↓ -->
+      <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #90caf9; font-size: 12px;">
+        💡 <b>詳細データ</b><br>
+        タロットごとの詳しい射程距離や効果範囲については、<br>
+        <a href="https://dragon-quest.jp/ten/job/uranai/range.php" target="_blank" rel="noopener noreferrer" style="color: #0d47a1; font-weight: bold; text-decoration: underline;">ドラクエ10極限攻略データベース様</a> のページが大変参考になります。
+      </div>
+      <!-- ↑↑↑ 追加部分 ↑↑↑ -->
     </div>
     <table id="tbl-arcana">
-      <thead><tr><th>アルカナ</th><th>枚数</th><th>オーラオプション</th></tr></thead>
+      <thead><tr><th>アルカナ</th><th>枚数</th><th>オプション</th></tr></thead>
       <tbody id="tbody-arcana"></tbody>
     </table>
   </div>
@@ -199,7 +207,19 @@
     <div style="display:flow-root;"><button class="btn-reset" onclick="resetTab('monster')">このタブをリセット</button></div>
     <div class="info-box">
       ※くさった死体以外のBランク以下は省略しています。(必要な場合は使わないカードで仮置きしてください。)<br>
-      Bランクのくさった死体には、攻撃系アルカナは自動では割り当てません。
+      Bランクのくさった死体には、攻撃系アルカナは自動では割り当てません。<br>
+      
+      <!-- ↓↓↓ 追加部分 ↓↓↓ -->
+      <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #90caf9; font-size: 12px;">
+        📖 <b>デッキ構築の参考サイト様</b><br>
+        <span style="display:inline-block; margin-top:4px;">
+        ・モンスターの合成について: <a href="https://hotondo.work/archives/dqx-uranaishi-tarot-monster-review.html#i" target="_blank" rel="noopener noreferrer" style="color: #0d47a1; font-weight: bold; text-decoration: underline;">ほとんどブログ 様（見やすいタロット合成早見表）</a>
+        </span><br>
+        <span style="display:inline-block; margin-top:4px;">
+        ・構成に迷ったら: <a href="https://tetofamimura.livedoor.blog/archives/31325559.html" target="_blank" rel="noopener noreferrer" style="color: #0d47a1; font-weight: bold; text-decoration: underline;">てとファミ村 様（おすすめデッキ解説）</a>
+        </span>
+      </div>
+      <!-- ↑↑↑ 追加部分 ↑↑↑ -->
     </div>
     <table id="tbl-monster"><tbody id="tbody-monster"></tbody></table>
   </div>
@@ -913,6 +933,7 @@ function switchTab(id) {
 </body>
 
 </html>
+
 
 
 
