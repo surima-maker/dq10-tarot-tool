@@ -11,8 +11,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
   :root { 
-    --main-bg: #c07848; /* ゴーレムのオレンジ色（レンガ） */
-    --header-bg: #1a237e; /* 青色 */
+    --main-bg: #c07848; 
+    --header-bg: #1a237e; 
     --accent: #3949ab; 
     --text: #333; 
     --error: #c62828; 
@@ -28,8 +28,6 @@
     display: flex; 
     flex-direction: column; 
     min-height: 100vh;
-    
-    /* ▼▼▼ ゴーレムレンガ風パターン ▼▼▼ */
     background-color: var(--main-bg);
     background-image: 
       linear-gradient(335deg, rgba(0,0,0,0.15) 23px, transparent 23px),
@@ -38,7 +36,6 @@
       linear-gradient(155deg, rgba(0,0,0,0.15) 23px, transparent 23px);
     background-size: 58px 58px;
     background-position: 0px 2px, 4px 35px, 29px 31px, 34px 6px;
-    /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
   }
   
   header { 
@@ -122,7 +119,6 @@
   .opt-res-row { display:flex; margin-bottom:5px; align-items: baseline; border-bottom:1px dashed #eee; padding-bottom:3px; }
   .opt-res-mon { font-weight: bold; width:130px; color:#444; }
   
-  /* 有効/無効トグルボタンとグレーアウト設定 */
   .btn-active-toggle { width: 60px; height: 26px; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; margin-right: 10px; display: inline-flex; align-items: center; justify-content: center; }
   .btn-active-on { background: #2e7d32; color: #fff; }
   .btn-active-off { background: #9e9e9e; color: #fff; }
@@ -138,7 +134,6 @@
   @keyframes blink { 50% { opacity: 0.5; } }
   .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
   
-  /* フッター */
   footer { 
     background: rgba(0, 0, 0, 0.75);
     color: #ddd; 
@@ -176,7 +171,6 @@
 
 <div class="container">
   
-  <!-- TAB 1: Arcana -->
   <div id="panel-arcana" class="panel active">
     <div style="display:flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
       <label style="margin-right: 10px; font-size: 12px; font-weight: bold; cursor: pointer;">
@@ -205,7 +199,6 @@
     </table>
   </div>
 
-  <!-- TAB 2: Monster -->
   <div id="panel-monster" class="panel">
     <div style="display:flow-root;"><button class="btn-reset" onclick="resetTab('monster')">このタブをリセット</button></div>
     <div class="info-box">
@@ -225,7 +218,6 @@
     <table id="tbl-monster"><tbody id="tbody-monster"></tbody></table>
   </div>
 
-  <!-- TAB 3: Fixed -->
   <div id="panel-exception" class="panel">
     <div style="display:flow-root;"><button class="btn-reset" onclick="resetTab('exception')">このタブをリセット</button></div>
     <div class="info-box">
@@ -235,13 +227,11 @@
     <div id="exception-content"></div>
   </div>
 
-  <!-- TAB 4: Result -->
   <div id="panel-result" class="panel">
     <button id="btn-run" class="btn-primary" onclick="runSingleOptimizeUI()">🔄 デッキ作成</button>
     <div id="result-content" style="margin-top:20px;"></div>
   </div>
 
-  <!-- TAB 5: Storage -->
   <div id="panel-storage" class="panel">
     <div class="info-box" style="background:#fff3e0; border-left-color:#ff9800;">
       <b>⚡ 一括最適化機能</b><br>
@@ -265,7 +255,6 @@
       <div id="global-result" style="margin-top:15px;"></div>
     </div>
     
-    <!-- エクスポート/インポート機能 -->
     <div style="margin-top:40px; padding-top:20px; border-top:2px dashed #ccc;">
       <b>💾 データのバックアップ (エクスポート/インポート)</b>
       <textarea id="io-data" class="save-input" style="width:100%; height:60px; margin-top:10px; font-size:11px; font-family:monospace; line-height:1.2; resize:vertical;" placeholder="ここにデータが出力されます。復元する際もここにデータを貼り付けてください。"></textarea>
@@ -278,7 +267,6 @@
 
 </div>
 
-<!-- フッター（引用元表記） -->
 <footer>
   ※本ツールのアルカナおよびモンスターの効果データは、<br>
   <a href="https://wikiwiki.jp/dq10dic2nd/%E3%80%90%E3%83%A2%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%BF%E3%83%AD%E3%83%83%E3%83%88%E3%80%91#u55917ff" target="_blank" rel="noopener noreferrer">『DQ10大辞典を作ろうぜ！！第二版 Wiki』様のデータ</a> を引用・参考にさせていただいております。
@@ -289,28 +277,28 @@ const ATK_ARCANAS = ['罪人','死神','正義','戦車','塔'];
 const H_ARCANAS = ['悪魔','恋人','運命','女教皇','審判','女帝','月','星'];
 
 const ARCANA_DATA = [
-  {name:'隠者',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性単体攻撃<br>雷耐性低下付与'}, 
-  {name:'罪人',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性単体攻撃<br>敵に悪い効果があるほど威力上昇'}, 
-  {name:'死神',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性範囲攻撃<br>HP減少の呪い'}, 
   {name:'正義',limit:4, color:'#ffebee', desc:'攻魔依存の光属性単体攻撃<br>敵が怒っていると威力上昇'}, 
   {name:'戦車',limit:4, color:'#ffebee', desc:'攻撃力依存の無属性単体攻撃。<br>自分に良い効果があるほど威力上昇'}, 
+  {name:'死神',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性範囲攻撃<br>HP減少の呪い'}, 
   {name:'塔',limit:4, color:'#ffebee', desc:'攻魔依存の雷属性範囲攻撃<br>闇耐性低下付与'},
-  {name:'悪魔',limit:4, color:'#e3f2fd', desc:'敵単体にテンションリンク'}, 
-  {name:'恋人',limit:4, color:'#e3f2fd', desc:'味方1人にテンションリンク(自分不可)'}, 
-  {name:'皇帝',limit:2, color:'#e3f2fd', desc:'味方1人にチャージ時間短縮(10秒/オーラ15秒)'}, 
-  {name:'世界',limit:4, color:'#e3f2fd', desc:'自分と周囲の味方にスペルガード'}, 
+  {name:'罪人',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性単体攻撃<br>敵に悪い効果があるほど威力上昇'}, 
+  {name:'隠者',limit:4, color:'#ffebee', desc:'攻魔依存の闇属性単体攻撃<br>雷耐性低下付与'}, 
   {name:'力',limit:4, color:'#e3f2fd', desc:'自分と周囲の味方バイキルト'},   
   {name:'魔術師',limit:5, color:'#e3f2fd', desc:'味方1人にテンションを2段階上昇(自分不可)'},
-  {name:'運命',limit:4, color:'#e8f5e9', desc:'長射程単体蘇生 基礎10m'}, 
-  {name:'女教皇',limit:4, color:'#e8f5e9', desc:'仲間1人のHPを回復し、悪い効果を消す'}, 
+  {name:'恋人',limit:4, color:'#e3f2fd', desc:'味方1人にテンションリンク(自分不可)'}, 
+  {name:'悪魔',limit:4, color:'#e3f2fd', desc:'敵単体にテンションリンク'}, 
+  {name:'皇帝',limit:2, color:'#e3f2fd', desc:'味方1人にチャージ時間短縮(10秒/オーラ15秒)'}, 
+  {name:'世界',limit:4, color:'#e3f2fd', desc:'自分と周囲の味方にスペルガード'}, 
   {name:'教皇',limit:4, color:'#e8f5e9', desc:'自分と周囲の味方にスクルト＋リジェネ'}, 
-  {name:'審判',limit:2, color:'#e8f5e9', desc:'自分の周囲範囲蘇生 基礎8m'}, 
+  {name:'女教皇',limit:4, color:'#e8f5e9', desc:'仲間1人のHPを回復し、悪い効果を消す'}, 
   {name:'節制',limit:2, color:'#e8f5e9', desc:'自分と周囲の味方に3秒にMP(5/オーラ10)ずつ回復の効果'}, 
   {name:'太陽',limit:2, color:'#e8f5e9', desc:'ベホマラー'},
-  {name:'愚者',limit:2, color:'#f3e5f5', desc:'被ダメージ1.2倍の陣'}, 
-  {name:'女帝',limit:4, color:'#f3e5f5', desc:'対象とその周囲の敵に魅了'}, 
+  {name:'審判',limit:2, color:'#e8f5e9', desc:'自分の周囲範囲蘇生 基礎8m'}, 
+  {name:'運命',limit:4, color:'#e8f5e9', desc:'長射程単体蘇生 基礎10m'}, 
   {name:'月',limit:4, color:'#f3e5f5', desc:'幻惑効果の陣'},   
-  {name:'星',limit:4, color:'#f3e5f5', desc:'眠り効果の陣'}
+  {name:'星',limit:4, color:'#f3e5f5', desc:'眠り効果の陣'},
+  {name:'愚者',limit:2, color:'#f3e5f5', desc:'被ダメージ1.2倍の陣'}, 
+  {name:'女帝',limit:4, color:'#f3e5f5', desc:'対象とその周囲の敵に魅了'}
 ];
 
 const MONSTER_DATA = [
@@ -671,7 +659,11 @@ function renderResult(map, container, state) {
   let html = '<table><thead><tr><th>モンスター</th><th>構成</th></tr></thead><tbody>';
   MONSTER_DATA.forEach(m => {
     if(map[m.name]) {
-      let badges = map[m.name].map(name => `<span class="res-card res-${state.arcanaPriorities[name]||'N'}">${name}</span>`).join('');
+      // アルカナ順にソートして表示
+      let sortedCards = [...map[m.name]].sort((a, b) => {
+        return ARCANA_DATA.findIndex(x=>x.name===a) - ARCANA_DATA.findIndex(x=>x.name===b);
+      });
+      let badges = sortedCards.map(name => `<span class="res-card res-${state.arcanaPriorities[name]||'N'}">${name}</span>`).join('');
       html += `<tr><td><b>${m.name}</b> <span class="rank-badge rk-${m.rank}">${m.rank}</span></td><td>${badges}</td></tr>`;
     }
   });
@@ -932,7 +924,11 @@ function renderDeckList() {
     let contentHtml = '';
     if(d.state.optimizedResult && Object.keys(d.state.optimizedResult).length > 0) {
       for(let m in d.state.optimizedResult) {
-        let cards = d.state.optimizedResult[m].map(name => `<span class="res-card res-${d.state.arcanaPriorities[name]||'N'}" style="font-weight:normal;">${name}</span>`).join('');
+        // アルカナ順にソートして表示
+        let sortedCards = [...d.state.optimizedResult[m]].sort((a, b) => {
+          return ARCANA_DATA.findIndex(x=>x.name===a) - ARCANA_DATA.findIndex(x=>x.name===b);
+        });
+        let cards = sortedCards.map(name => `<span class="res-card res-${d.state.arcanaPriorities[name]||'N'}" style="font-weight:normal;">${name}</span>`).join('');
         contentHtml += `<div class="opt-res-row"><div class="opt-res-mon">${m}</div><div>${cards}</div></div>`;
       }
     } else contentHtml = '<span style="color:#999; font-weight:bold;">構成がまだ作成されていません</span>';
