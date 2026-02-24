@@ -134,6 +134,12 @@
   @keyframes blink { 50% { opacity: 0.5; } }
   .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
   
+  /* カルーセルUI */
+  .carousel-controls { display: none; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; padding: 10px; background: #e8eaf6; border-radius: 6px; border: 1px solid #c5cae9; }
+  .btn-carousel { background: #fff; color: #1a237e; border: 1px solid #9fa8da; padding: 6px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+  .btn-carousel:hover { background: #e3f2fd; }
+  .pattern-info { font-weight: bold; color: #1a237e; font-size: 14px; }
+
   footer { 
     background: rgba(0, 0, 0, 0.75);
     color: #ddd; 
@@ -252,7 +258,16 @@
         <button class="btn-primary" style="background:#ef6c00; flex:2;" onclick="runGlobalOptimizationUI()">⚡ 複数のデッキの必要枚数を最適化する</button>
         <button class="btn-primary" style="background:#757575; flex:1;" onclick="undoOptimization()">⏪ 一個前の状態に戻す</button>
       </div>
-      <div id="global-result" style="margin-top:15px;"></div>
+      
+      <!-- カルーセル(複数パターン切り替え) UI -->
+      <div id="carousel-wrapper" style="margin-top:20px;">
+        <div id="carousel-controls" class="carousel-controls">
+          <button class="btn-carousel" onclick="changePattern(-1)">◀ 前のパターン</button>
+          <span class="pattern-info">パターン <span id="pattern-idx">1</span> / <span id="pattern-total">1</span></span>
+          <button class="btn-carousel" onclick="changePattern(1)">次のパターン ▶</button>
+        </div>
+        <div id="global-result"></div>
+      </div>
     </div>
     
     <div style="margin-top:40px; padding-top:20px; border-top:2px dashed #ccc;">
@@ -355,12 +370,16 @@ function getWeight(mName) {
 // ================= STATE =================
 let appState = { arcanaCounts: {}, arcanaPriorities: {}, monsterCounts: {}, exceptionData: {}, optimizedResult: {} };
 let savedDecks = [];
-let backupDecks = null; // Undo用
+let backupDecks = null; 
 let activeTabId = 'arcana';
 
+// カルーセル用グローバル変数
+let currentOptimalSolutions = [];
+let currentPatternIdx = 0;
+
 window.onload = () => {
-  const s = localStorage.getItem('dq10_v54_state'); if(s) appState = JSON.parse(s); else resetStateBase();
-  const d = localStorage.getItem('dq10_v54_decks'); if(d) savedDecks = JSON.parse(d);
+  const s = localStorage.getItem('dq10_v55_state'); if(s) appState = JSON.parse(s); else resetStateBase();
+  const d = localStorage.getItem('dq10_v55_decks'); if(d) savedDecks = JSON.parse(d);
   renderAll();
 };
 
@@ -392,7 +411,7 @@ function resetTab(tabId) {
   saveData(); renderAll();
 }
 
-function saveData() { localStorage.setItem('dq10_v54_state', JSON.stringify(appState)); updateStats(); }
+function saveData() { localStorage.setItem('dq10_v55_state', JSON.stringify(appState)); updateStats(); }
 
 function updateStats() {
   let aCount = Object.values(appState.arcanaCounts).reduce((a,b)=>a+b,0);
@@ -531,6 +550,13 @@ function getPermutations(arr) {
   return perms;
 }
 
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
 function buildDeckData(state) {
   let pool = { A:0, N:0, D:0, H:0 }; let poolNames = { A:[], N:[], D:[], H:[] };
   for(let aName in state.arcanaCounts) {
@@ -604,6 +630,9 @@ function dfsBestScore(pairs, pool) {
       }
     }
 
+    // パターンの多様性を生むためのランダムシャッフル
+    shuffleArray(cands);
+
     let bestScore = Infinity; let bestAssign = null;
     for (let c of cands) {
       let cost1 = (p1.type === null) ? c[0] : null; let cost2 = (p2 !== null && p2.type === null) ? c[1] : null;
@@ -659,7 +688,6 @@ function renderResult(map, container, state) {
   let html = '<table><thead><tr><th>モンスター</th><th>構成</th></tr></thead><tbody>';
   MONSTER_DATA.forEach(m => {
     if(map[m.name]) {
-      // アルカナ順にソートして表示
       let sortedCards = [...map[m.name]].sort((a, b) => {
         return ARCANA_DATA.findIndex(x=>x.name===a) - ARCANA_DATA.findIndex(x=>x.name===b);
       });
@@ -670,15 +698,27 @@ function renderResult(map, container, state) {
   container.innerHTML = html + '</tbody></table>';
 }
 
+// ----------------------------------------------------
+// カルーセル＆一括最適化処理
+// ----------------------------------------------------
+function getSolutionFingerprint(resultMaps) {
+  return resultMaps.map(resMap => {
+    let keys = Object.keys(resMap).sort();
+    return keys.map(k => `${k}:${[...resMap[k]].sort().join(',')}`).join('|');
+  }).join('||');
+}
+
 function calculateNeedsOnly() {
   const output = document.getElementById('global-result');
+  document.getElementById('carousel-controls').style.display = 'none'; // カルーセル非表示
+  
   if(savedDecks.length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">保存デッキがありません</span>'; return; }
   
   let finalGlobalNeeds = {};
   let activeCount = 0;
   
   savedDecks.forEach(d => {
-    if(d.active === false) return; // 無効デッキはスキップ
+    if(d.active === false) return; 
     activeCount++;
     if(!d.state.optimizedResult || Object.keys(d.state.optimizedResult).length === 0) return; 
     for(let mName in d.state.optimizedResult) {
@@ -688,34 +728,30 @@ function calculateNeedsOnly() {
     }
   });
   
-  if(activeCount === 0) {
-    output.innerHTML = '<span style="color:red; font-weight:bold;">有効なデッキがありません。（デッキ名の左のボタンで有効化してください）</span>'; return;
-  }
-  if(Object.keys(finalGlobalNeeds).length === 0) {
-    output.innerHTML = '<span style="color:red; font-weight:bold;">すべての有効なデッキが未作成（計算前）です。</span>'; return;
-  }
+  if(activeCount === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">有効なデッキがありません。</span>'; return; }
+  if(Object.keys(finalGlobalNeeds).length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">すべての有効なデッキが未作成（計算前）です。</span>'; return; }
   renderCardList(finalGlobalNeeds, output, "📊 現在の必要カードリスト");
 }
 
 function undoOptimization() {
   if(!backupDecks) { alert("戻せる履歴がありません。"); return; }
   savedDecks = JSON.parse(JSON.stringify(backupDecks));
-  localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks));
+  localStorage.setItem('dq10_v55_decks', JSON.stringify(savedDecks));
   renderDeckList();
+  document.getElementById('carousel-controls').style.display = 'none';
   document.getElementById('global-result').innerHTML = '<span style="color:var(--success); font-weight:bold;">一個前の状態に復元しました。</span>';
 }
 
 async function runGlobalOptimizationUI() {
   const output = document.getElementById('global-result');
+  const carouselCtrls = document.getElementById('carousel-controls');
+  carouselCtrls.style.display = 'none';
+  
   if(savedDecks.length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">保存デッキがありません</span>'; return; }
   
   let activeIndices = [];
   savedDecks.forEach((d, i) => { if(d.active !== false) activeIndices.push(i); });
-  
-  if(activeIndices.length === 0) { 
-    output.innerHTML = '<span style="color:red; font-weight:bold;">有効なデッキがありません。（デッキ名の左のボタンで有効化してください）</span>'; 
-    return; 
-  }
+  if(activeIndices.length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">有効なデッキがありません。</span>'; return; }
   
   backupDecks = JSON.parse(JSON.stringify(savedDecks));
   
@@ -727,11 +763,11 @@ async function runGlobalOptimizationUI() {
     let origIdx = activeIndices[i];
     let dd = buildDeckData(savedDecks[origIdx].state); 
     let res = dfsBestScore(dd.pairs, dd.pool);
-    if(res.score === Infinity) { output.innerHTML = `<span style="color:red; font-weight:bold;">デッキ「${savedDecks[origIdx].name}」のエラー: 禁止ペアを回避できません。手動で構成を見直してください。</span>`; return; }
+    if(res.score === Infinity) { output.innerHTML = `<span style="color:red; font-weight:bold;">デッキ「${savedDecks[origIdx].name}」のエラー: 禁止ペアを回避できません。</span>`; return; }
     initialBestScores.push(res.score);
   }
   
-  output.innerHTML = '<div class="loading">Step 2: 究極・全ルートシミュレーションを実行中...<br><small>（最適解を検索中です。数秒かかります）</small></div>';
+  output.innerHTML = '<div class="loading">Step 2: 究極・複数パターンのシミュレーションを実行中...<br><small>（最適解を検索中です。数秒かかります）</small></div>';
   await new Promise(r => setTimeout(r, 10));
 
   let mSet = new Set();
@@ -745,104 +781,147 @@ async function runGlobalOptimizationUI() {
   if(rarePerms.length === 0) rarePerms = [[]]; 
   
   let bestGlobalCost = Infinity;
-  let bestResultMaps = null;
-
-  for(let perm of rarePerms) {
-    let simDecks = activeIndices.map((origIdx, i) => {
-      let dd = buildDeckData(savedDecks[origIdx].state); dd.bestScore = initialBestScores[i]; return dd;
-    });
-    
-    let processOrder = perm.concat(normalMonsters);
-    
-    for(let mName of processOrder) {
-      let maxNeeded = Math.max(...simDecks.map(dd => dd.unassignedSlots.filter(s => s.mName === mName).length));
-      if(maxNeeded === 0) continue;
+  let optimalSolutions = []; // 複数パターンのストック
+  
+  // シミュレーションを複数回(10回)回して、同着の別パターンをあぶり出す
+  const SIMULATION_RUNS = 10;
+  
+  for(let run = 0; run < SIMULATION_RUNS; run++) {
+    for(let perm of rarePerms) {
+      let simDecks = activeIndices.map((origIdx, i) => {
+        let dd = buildDeckData(savedDecks[origIdx].state); dd.bestScore = initialBestScores[i]; return dd;
+      });
       
-      for(let slotIdx = 0; slotIdx < maxNeeded; slotIdx++) {
-        let targetDecks = simDecks.filter(dd => dd.unassignedSlots.filter(s => s.mName === mName).length > slotIdx);
-        if(targetDecks.length === 0) continue;
+      let processOrder = perm.concat(normalMonsters);
+      
+      for(let mName of processOrder) {
+        let maxNeeded = Math.max(...simDecks.map(dd => dd.unassignedSlots.filter(s => s.mName === mName).length));
+        if(maxNeeded === 0) continue;
         
-        let arcanaFreq = {};
-        targetDecks.forEach(dd => {
-          let uniqueArcs = new Set();
-          for(let type in dd.poolNames) dd.poolNames[type].forEach(a => uniqueArcs.add(a));
-          uniqueArcs.forEach(a => { arcanaFreq[a] = (arcanaFreq[a] || 0) + 1; });
-        });
-        let candidates = Object.keys(arcanaFreq).sort((a,b) => arcanaFreq[b] - arcanaFreq[a]);
-        
-        let bestCandidate = null; let maxAppliedDecks = -1;
-        
-        for(let cand of candidates) {
-          let appliedDecks = []; let type = savedDecks[activeIndices[0]].state.arcanaPriorities[cand];
+        for(let slotIdx = 0; slotIdx < maxNeeded; slotIdx++) {
+          let targetDecks = simDecks.filter(dd => dd.unassignedSlots.filter(s => s.mName === mName).length > slotIdx);
+          if(targetDecks.length === 0) continue;
           
-          for(let i=0; i<targetDecks.length; i++) {
-            let dd = targetDecks[i];
-            
-            if(!dd.poolNames[type].includes(cand)) continue; 
-            let slot = dd.unassignedSlots.filter(s => s.mName === mName)[slotIdx];
-            if(slot.isB && type === 'A') continue; 
-            
-            slot.fixedName = cand; slot.type = type; dd.pool[type]--;
-            let testRes = dfsBestScore(dd.pairs, dd.pool);
-            if(testRes.score <= dd.bestScore) appliedDecks.push(dd); 
-            slot.fixedName = null; slot.type = null; dd.pool[type]++;
-          }
-          if(appliedDecks.length > maxAppliedDecks) { maxAppliedDecks = appliedDecks.length; bestCandidate = { name: cand, type: type, decks: appliedDecks }; }
-          if(maxAppliedDecks === targetDecks.length) break; 
-        }
-        
-        if(bestCandidate && bestCandidate.decks.length > 0) {
-          bestCandidate.decks.forEach(dd => {
-            let slot = dd.unassignedSlots.filter(s => s.mName === mName)[slotIdx];
-            slot.fixedName = bestCandidate.name; slot.type = bestCandidate.type;
-            dd.pool[bestCandidate.type]--; dd.poolNames[bestCandidate.type].splice(dd.poolNames[bestCandidate.type].indexOf(bestCandidate.name), 1);
+          let arcanaFreq = {};
+          targetDecks.forEach(dd => {
+            let uniqueArcs = new Set();
+            for(let type in dd.poolNames) dd.poolNames[type].forEach(a => uniqueArcs.add(a));
+            uniqueArcs.forEach(a => { arcanaFreq[a] = (arcanaFreq[a] || 0) + 1; });
           });
+          
+          // ランダムタイブレーカーによる多様性の創出
+          let candidates = Object.keys(arcanaFreq).sort((a,b) => {
+            if(arcanaFreq[b] !== arcanaFreq[a]) return arcanaFreq[b] - arcanaFreq[a];
+            return Math.random() - 0.5; 
+          });
+          
+          let bestCandidate = null; let maxAppliedDecks = -1;
+          
+          for(let cand of candidates) {
+            let appliedDecks = []; let type = savedDecks[activeIndices[0]].state.arcanaPriorities[cand];
+            for(let i=0; i<targetDecks.length; i++) {
+              let dd = targetDecks[i];
+              if(!dd.poolNames[type].includes(cand)) continue; 
+              let slot = dd.unassignedSlots.filter(s => s.mName === mName)[slotIdx];
+              if(slot.isB && type === 'A') continue; 
+              
+              slot.fixedName = cand; slot.type = type; dd.pool[type]--;
+              let testRes = dfsBestScore(dd.pairs, dd.pool);
+              if(testRes.score <= dd.bestScore) appliedDecks.push(dd); 
+              slot.fixedName = null; slot.type = null; dd.pool[type]++;
+            }
+            if(appliedDecks.length > maxAppliedDecks) { maxAppliedDecks = appliedDecks.length; bestCandidate = { name: cand, type: type, decks: appliedDecks }; }
+            if(maxAppliedDecks === targetDecks.length) break; 
+          }
+          
+          if(bestCandidate && bestCandidate.decks.length > 0) {
+            bestCandidate.decks.forEach(dd => {
+              let slot = dd.unassignedSlots.filter(s => s.mName === mName)[slotIdx];
+              slot.fixedName = bestCandidate.name; slot.type = bestCandidate.type;
+              dd.pool[bestCandidate.type]--; dd.poolNames[bestCandidate.type].splice(dd.poolNames[bestCandidate.type].indexOf(bestCandidate.name), 1);
+            });
+          }
+        }
+      }
+      
+      let simResultMaps = [];
+      let isValidRoute = true;
+      simDecks.forEach((dd) => {
+        let res = dfsBestScore(dd.pairs, dd.pool);
+        if(res.score === Infinity) { isValidRoute = false; return; }
+        let resMap = {};
+        for(let j=0; j<dd.pairs.length; j++) {
+          let p1 = dd.pairs[j][0], p2 = dd.pairs[j][1]; let t1 = res.assignment[j][0], t2 = res.assignment[j][1];
+          if(!resMap[p1.mName]) resMap[p1.mName] = []; resMap[p1.mName][p1.idx] = p1.fixedName ? p1.fixedName : dd.poolNames[t1].pop();
+          if(p2) { if(!resMap[p2.mName]) resMap[p2.mName] = []; resMap[p2.mName][p2.idx] = p2.fixedName ? p2.fixedName : dd.poolNames[t2].pop(); }
+        }
+        simResultMaps.push(resMap);
+      });
+      if(!isValidRoute) continue;
+      
+      let globalNeeds = {};
+      simResultMaps.forEach(resMap => {
+        for(let m in resMap) {
+          if(!globalNeeds[m]) globalNeeds[m] = {}; let localCounts = {};
+          resMap[m].forEach(c => localCounts[c] = (localCounts[c]||0)+1);
+          for(let c in localCounts) globalNeeds[m][c] = Math.max(globalNeeds[m][c] || 0, localCounts[c]);
+        }
+      });
+      
+      let currentCost = 0;
+      for(let m in globalNeeds) {
+        let weight = getWeight(m);
+        let count = Object.values(globalNeeds[m]).reduce((a,b)=>a+b,0);
+        currentCost += weight * count; 
+      }
+      
+      // 同点1位のストック処理
+      if(currentCost <= bestGlobalCost) {
+        let fp = getSolutionFingerprint(simResultMaps);
+        if(currentCost < bestGlobalCost) {
+          bestGlobalCost = currentCost;
+          optimalSolutions = [{ maps: simResultMaps, fp: fp }];
+        } else {
+          // 重複チェックして追加 (最大20個まで)
+          if(optimalSolutions.length < 20 && !optimalSolutions.some(sol => sol.fp === fp)) {
+            optimalSolutions.push({ maps: simResultMaps, fp: fp });
+          }
         }
       }
     }
-    
-    let simResultMaps = [];
-    let isValidRoute = true;
-    simDecks.forEach((dd) => {
-      let res = dfsBestScore(dd.pairs, dd.pool);
-      if(res.score === Infinity) { isValidRoute = false; return; }
-      let resMap = {};
-      for(let j=0; j<dd.pairs.length; j++) {
-        let p1 = dd.pairs[j][0], p2 = dd.pairs[j][1]; let t1 = res.assignment[j][0], t2 = res.assignment[j][1];
-        if(!resMap[p1.mName]) resMap[p1.mName] = []; resMap[p1.mName][p1.idx] = p1.fixedName ? p1.fixedName : dd.poolNames[t1].pop();
-        if(p2) { if(!resMap[p2.mName]) resMap[p2.mName] = []; resMap[p2.mName][p2.idx] = p2.fixedName ? p2.fixedName : dd.poolNames[t2].pop(); }
-      }
-      simResultMaps.push(resMap);
-    });
-    if(!isValidRoute) continue;
-    
-    let globalNeeds = {};
-    simResultMaps.forEach(resMap => {
-      for(let m in resMap) {
-        if(!globalNeeds[m]) globalNeeds[m] = {}; let localCounts = {};
-        resMap[m].forEach(c => localCounts[c] = (localCounts[c]||0)+1);
-        for(let c in localCounts) globalNeeds[m][c] = Math.max(globalNeeds[m][c] || 0, localCounts[c]);
-      }
-    });
-    
-    let currentCost = 0;
-    for(let m in globalNeeds) {
-      let weight = getWeight(m);
-      let count = Object.values(globalNeeds[m]).reduce((a,b)=>a+b,0);
-      currentCost += weight * count; 
-    }
-    
-    if(currentCost < bestGlobalCost) { bestGlobalCost = currentCost; bestResultMaps = simResultMaps; }
   }
 
-  if(!bestResultMaps) {
+  if(optimalSolutions.length === 0) {
     output.innerHTML = '<span style="color:red; font-weight:bold;">最適化に失敗しました。（エラー発生）</span>'; return;
   }
 
+  // グローバル変数にセットして最初のパターンを描画
+  currentOptimalSolutions = optimalSolutions.map(s => s.maps);
+  currentPatternIdx = 0;
+  
+  applyPatternAndRender(activeIndices, output, carouselCtrls);
+}
+
+function changePattern(dir) {
+  if(currentOptimalSolutions.length <= 1) return;
+  currentPatternIdx += dir;
+  if(currentPatternIdx < 0) currentPatternIdx = currentOptimalSolutions.length - 1;
+  if(currentPatternIdx >= currentOptimalSolutions.length) currentPatternIdx = 0;
+  
+  let activeIndices = [];
+  savedDecks.forEach((d, i) => { if(d.active !== false) activeIndices.push(i); });
+  
+  applyPatternAndRender(activeIndices, document.getElementById('global-result'), document.getElementById('carousel-controls'));
+}
+
+function applyPatternAndRender(activeIndices, outputEl, ctrlEl) {
+  let resultMaps = currentOptimalSolutions[currentPatternIdx];
+  
   activeIndices.forEach((origIdx, i) => { 
-    savedDecks[origIdx].state.optimizedResult = bestResultMaps[i]; 
+    savedDecks[origIdx].state.optimizedResult = resultMaps[i]; 
   });
-  localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderDeckList();
+  localStorage.setItem('dq10_v55_decks', JSON.stringify(savedDecks)); 
+  renderDeckList(); // 展開UIの更新
 
   let finalGlobalNeeds = {};
   activeIndices.forEach(origIdx => {
@@ -854,7 +933,15 @@ async function runGlobalOptimizationUI() {
     }
   });
   
-  renderCardList(finalGlobalNeeds, output, "🎴 最適化完了: 必要カードリスト");
+  if(currentOptimalSolutions.length > 1) {
+    ctrlEl.style.display = 'flex';
+    document.getElementById('pattern-idx').textContent = currentPatternIdx + 1;
+    document.getElementById('pattern-total').textContent = currentOptimalSolutions.length;
+  } else {
+    ctrlEl.style.display = 'none';
+  }
+  
+  renderCardList(finalGlobalNeeds, outputEl, "🎴 最適化完了: 必要カードリスト");
 }
 
 function renderCardList(needsMap, container, title) {
@@ -903,7 +990,7 @@ function importData() {
       savedDecks = shortObj.d.map(d => ({ name: d.n, active: d.act !== false, state: { arcanaCounts: d.a||{}, arcanaPriorities: d.p||{}, monsterCounts: d.m||{}, exceptionData: d.e||{}, optimizedResult: d.o||{} } }));
     }
     if(!confirm("現在のデータはすべて上書きされます。よろしいですか？")) return;
-    saveData(); localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderAll();
+    saveData(); localStorage.setItem('dq10_v55_decks', JSON.stringify(savedDecks)); renderAll();
     alert("データを復元しました。");
   } catch(e) { alert("読み込みエラー: 正しいデータ形式ではありません。"); }
 }
@@ -911,7 +998,7 @@ function importData() {
 // ================= STORAGE =================
 function toggleDeckActive(i) {
   savedDecks[i].active = (savedDecks[i].active === false) ? true : false;
-  localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks));
+  localStorage.setItem('dq10_v55_decks', JSON.stringify(savedDecks));
   renderDeckList();
 }
 
@@ -924,7 +1011,6 @@ function renderDeckList() {
     let contentHtml = '';
     if(d.state.optimizedResult && Object.keys(d.state.optimizedResult).length > 0) {
       for(let m in d.state.optimizedResult) {
-        // アルカナ順にソートして表示
         let sortedCards = [...d.state.optimizedResult[m]].sort((a, b) => {
           return ARCANA_DATA.findIndex(x=>x.name===a) - ARCANA_DATA.findIndex(x=>x.name===b);
         });
@@ -948,10 +1034,10 @@ function renderDeckList() {
 function toggleDeck(i) { document.getElementById(`deck-body-${i}`).classList.toggle('open'); }
 function saveCurrentDeck() {
   const name = document.getElementById('deck-name-input').value || `マイデッキ ${savedDecks.length+1}`;
-  savedDecks.push({ name: name, active: true, state: JSON.parse(JSON.stringify(appState)) }); localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderDeckList(); document.getElementById('deck-name-input').value = '';
+  savedDecks.push({ name: name, active: true, state: JSON.parse(JSON.stringify(appState)) }); localStorage.setItem('dq10_v55_decks', JSON.stringify(savedDecks)); renderDeckList(); document.getElementById('deck-name-input').value = '';
 }
 function loadDeck(i) { if(!confirm(`「${savedDecks[i].name}」を読み込みますか？`)) return; appState = JSON.parse(JSON.stringify(savedDecks[i].state)); saveData(); renderAll(); switchTab('arcana'); }
-function deleteDeck(i) { if(!confirm(`削除しますか？`)) return; savedDecks.splice(i, 1); localStorage.setItem('dq10_v54_decks', JSON.stringify(savedDecks)); renderDeckList(); }
+function deleteDeck(i) { if(!confirm(`削除しますか？`)) return; savedDecks.splice(i, 1); localStorage.setItem('dq10_v55_decks', JSON.stringify(savedDecks)); renderDeckList(); }
 function switchTab(id) { 
   activeTabId = id;
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); 
