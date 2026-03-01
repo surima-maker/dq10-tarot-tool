@@ -296,12 +296,11 @@ const MONSTER_DATA = [
 ];
 
 const TARGET_RARES = [
-  {name:'ゴールデンスライム', w:100000}, {name:'Sキラーマシン', w:100000}, 
-  {name:'メイデンドール', w:100000},
-  {name:'くらやみハーピー', w:50000}, {name:'メカバーン', w:50000}, 
-  {name:'キラーマジンガ', w:50000}, {name:'ネクロバルサ', w:50000}, 
-  {name:'プラチナキング', w:50000}, {name:'ランプのまおう', w:50000}, 
-  {name:'レジェンドホース', w:50000}
+  {name:'くらやみハーピー', w:100000}, {name:'ゴールデンスライム', w:100000}, 
+  {name:'Sキラーマシン', w:100000}, {name:'メイデンドール', w:100000},
+  {name:'メカバーン', w:50000}, {name:'キラーマジンガ', w:50000}, 
+  {name:'ネクロバルサ', w:50000}, {name:'プラチナキング', w:50000},
+  {name:'ランプのまおう', w:50000}, {name:'レジェンドホース', w:50000}
 ];
 function getWeight(mName) {
   let r = TARGET_RARES.find(x => x.name === mName);
@@ -1070,3 +1069,4 @@ function switchTab(id) {
 </script>
 </body>
 </html>
+
