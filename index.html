@@ -76,6 +76,7 @@
   @keyframes blink { 50% { opacity: 0.5; } }
   .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
 
+  /* 所持数設定アコーディオン */
   .stock-settings-header { cursor: pointer; background: #FFF9C4; padding: 10px; border: 1px solid #FBC02D; border-radius: 6px; margin-bottom: 10px; font-weight: bold; display:flex; justify-content:space-between; align-items:center; }
   .stock-settings-body { display: block; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 20px; }
   .stock-item { display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #eee; padding:5px 0; }
@@ -109,15 +110,16 @@
 
 <div class="container">
   
+  <!-- TAB 1: Arcana -->
   <div id="panel-arcana" class="panel active">
     <div style="display:flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
       <label style="margin-right: 10px; font-size: 12px; font-weight: bold; cursor: pointer;">
-        <input type="checkbox" id="chk-reset-opt" checked> オーラオプションも初期化
+        <input type="checkbox" id="chk-reset-opt" checked> オプションも初期化
       </label>
       <button class="btn-reset" onclick="resetTab('arcana')" style="margin: 0;">このタブをリセット</button>
     </div>
     <div class="info-box">
-      <b>オーラオプションについて</b><br>
+      <b>オプションについて</b><br>
       手札でオーラを作りやすくするための設定です。<br>
       AとHを優先的に組ませ、DとHをできる限り減らすように設定されています。デフォルトは推奨の設定です。自由に変更してください。<br><br>
       <b>H</b> (Hand): 手札に残りやすい・低頻度使用<br>
@@ -132,11 +134,12 @@
       </div>
     </div>
     <table id="tbl-arcana">
-      <thead><tr><th>アルカナ</th><th>枚数</th><th>オーラオプション</th></tr></thead>
+      <thead><tr><th>アルカナ</th><th>枚数</th><th>オプション</th></tr></thead>
       <tbody id="tbody-arcana"></tbody>
     </table>
   </div>
 
+  <!-- TAB 2: Monster -->
   <div id="panel-monster" class="panel">
     <div style="display:flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
       <button class="btn-reset" onclick="resetTab('monster')" style="margin: 0;">このタブをリセット</button>
@@ -158,6 +161,7 @@
     <table id="tbl-monster"><tbody id="tbody-monster"></tbody></table>
   </div>
 
+  <!-- TAB 3: Fixed -->
   <div id="panel-exception" class="panel">
     <div style="display:flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
       <button class="btn-reset" onclick="resetTab('exception')" style="margin: 0;">このタブをリセット</button>
@@ -169,16 +173,18 @@
     <div id="exception-content"></div>
   </div>
 
+  <!-- TAB 4: Result -->
   <div id="panel-result" class="panel">
     <button id="btn-run" class="btn-primary" onclick="runSingleOptimizeUI()">🔄 デッキ作成</button>
     <div id="result-content" style="margin-top:20px;"></div>
   </div>
 
+  <!-- TAB 5: Storage -->
   <div id="panel-storage" class="panel">
     <div class="info-box" style="background:#fff3e0; border-left-color:#ff9800;">
       <b>⚡ 一括最適化機能</b><br>
       カード枚数が最も少なく済む組み合わせに最適化します。くらやみハーピーなどの一部のパックからしか出ない使用頻度の高いモンスターを優先的に計算します。<br>
-      この機能は入っているアルカナやモンスターの枚数は変更せず、あくまで割り当てのみを変更します。ボタンを押すたびに結果が変わることがあります。
+      この機能は入っているアルカナやモンスターの枚数は変更せず、あくまで割り当てのみを変更します。
     </div>
     
     <div style="margin-bottom:20px; display:flex; gap:10px;">
@@ -188,6 +194,7 @@
     
     <div id="deck-list-container"></div>
 
+    <!-- レアモンスター所持数設定エリア -->
     <div style="margin-top:30px; border-top:2px dashed #ccc; padding-top:20px;">
       <div class="stock-settings-header" onclick="toggleStockSettings()">
         <span>🎒 レアモンスター所持数設定</span>
@@ -197,7 +204,7 @@
         <div style="font-size:11px; color:#666; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
           <span>
             所持数を入力すると、それを最優先して超えないように最適化します（0は無制限）。<br>
-            ※色パックから出ない使用頻度の高そうなモンスターのみ対象にしています。
+            ※色パックから出ない使用頻度の高そうなモンスターのみ対象
           </span>
           <button onclick="resetStockLimits()" style="padding:4px 8px; font-size:11px; cursor:pointer; background:#e0e0e0; border:1px solid #ccc; border-radius:4px;">すべて0にする</button>
         </div>
@@ -226,12 +233,12 @@
 
 <footer>
   ※本ツールのアルカナおよびモンスターの効果データは、<br>
-  <a href="https://wikiwiki.jp/dq10dic2nd/%E3%80%90%E3%83%A2%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%BF%E3%83%AD%E3%83%83%E3%83%88%E3%80%91#a9d7ef15" target="_blank" rel="noopener noreferrer">『DQ10大辞典を作ろうぜ！！第二版 Wiki』様のデータ</a> を引用・参考にさせていただいております。
+  <a href="https://wikiwiki.jp/dq10dic2nd/%E3%80%90%E3%83%A2%E3%83%B3%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%BF%E3%83%AD%E3%83%83%E3%83%88%E3%80%91#u55917ff" target="_blank" rel="noopener noreferrer">『DQ10大辞典を作ろうぜ！！第二版 Wiki』様のデータ</a> を引用・参考にさせていただいております。
 </footer>
 
 <script>
 const ATK_ARCANAS = ['罪人','死神','正義','戦車','塔'];
-const H_ARCANAS = ['恋人','運命','女教皇','審判','女帝','月','星'];
+const H_ARCANAS = ['悪魔','恋人','運命','女教皇','審判','女帝','月','星'];
 
 const ARCANA_DATA = [
   {name:'正義',limit:4, color:'#ffebee', desc:'攻魔依存の光属性単体攻撃<br>敵が怒っていると威力上昇'}, 
@@ -272,15 +279,15 @@ const MONSTER_DATA = [
   {name:'ヘルバトラー',rank:'SS',limit:2,ex:false, desc:'こうげき魔力＋24'}, {name:'メイデンドール',rank:'SS',limit:2,ex:false, desc:'かいふく魔力+30'},
   {name:'レジェンドホース',rank:'SS',limit:2,ex:false, desc:'かいふく魔力＋25'},
   {name:'くらやみハーピー',rank:'S',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲+0.5m、タロットの射程距離＋0.5m'}, {name:'ミケまどう',rank:'S',limit:2,ex:false, desc:'タロットの射程距離＋2m'},
-  {name:'マッドスミス',rank:'S',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲＋1m'}, {name:'スウィートバッグ',rank:'S',limit:5,ex:true, desc:'使用時30%で手札に残る'}, {name:'メタルキング',rank:'S',limit:5,ex:false, desc:'最大HP＋3'}, {name:'メタルスライム',rank:'S',limit:5,ex:false, desc:'身かわし率＋0.3%'},
+  {name:'マッドスミス',rank:'S',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲＋1m'}, {name:'メタルスライム',rank:'S',limit:5,ex:false, desc:'身かわし率＋0.3%'},
   {name:'ゴールデンコーン',rank:'S',limit:5,ex:false, desc:'すばやさ＋8'}, {name:'つむりんママ',rank:'S',limit:5,ex:false, desc:'みのまもり＋4'},
   {name:'メタルホイミン',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のHP25回復'}, {name:'ツンドラキー',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のMP12回復'},
   {name:'ちょうろうじゅ',rank:'S',limit:5,ex:false, desc:'かいふく魔力＋8'}, {name:'ベビンゴサタン',rank:'S',limit:5,ex:false, desc:'こうげき魔力＋8'},
   {name:'ムーンキメラ',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のHP12%回復'}, {name:'キラーピッケル',rank:'S',limit:5,ex:true, desc:'手札に入った時10%でテンション上昇'},
   {name:'スイーツトロル',rank:'S',limit:5,ex:true, desc:'手札に入った時15%でテンション上昇'}, {name:'モッツァレーラ',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時自分のMP50回復'},
-  {name:'ピンクボンボン',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時味方全員のHP12%回復'}, 
+  {name:'ピンクボンボン',rank:'S',limit:5,ex:false, desc:'使用時or引き直し時味方全員のHP12%回復'}, {name:'スウィートバッグ',rank:'S',limit:5,ex:true, desc:'使用時30%で手札に残る'},
   {name:'死のカラステング',rank:'S',limit:5,ex:false, desc:'最大MP＋15'}, {name:'タイプG',rank:'S',limit:5,ex:false, desc:'ちから＋4'},
- {name:'アスタロト',rank:'S',limit:5,ex:true, desc:'使用時20%でテンション消費しない'},
+  {name:'メタルキング',rank:'S',limit:5,ex:false, desc:'最大HP＋3'}, {name:'アスタロト',rank:'S',limit:5,ex:true, desc:'使用時20%でテンション消費しない'},
   {name:'キングエレファント',rank:'S',limit:5,ex:true, desc:'使用時30%で効果2回発動'},
   {name:'リビングデッド',rank:'A',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲＋0.3m'}, {name:'スライムタワー',rank:'A',limit:5,ex:false, desc:'身かわし率＋0.2%'},
   {name:'ブラバニクイーン',rank:'A',limit:5,ex:false, desc:'すばやさ＋7'}, {name:'つららスライム',rank:'A',limit:5,ex:false, desc:'みのまもり＋3'},
@@ -292,7 +299,7 @@ const MONSTER_DATA = [
   {name:'おどるほうせき',rank:'A',limit:5,ex:false, desc:'使用時10%で手札に残る'}, {name:'ガーゴイル',rank:'A',limit:5,ex:false, desc:'最大MP＋5'},
   {name:'キラーマシン',rank:'A',limit:5,ex:false, desc:'ちから＋3'}, {name:'クイーンスライム',rank:'A',limit:5,ex:false, desc:'最大HP＋2'},
   {name:'エメラルドーン',rank:'A',limit:5,ex:false, desc:'使用時10%でテンション消費しない'}, {name:'ガネーシャエビル',rank:'A',limit:5,ex:false, desc:'使用時10%で効果2回発動'},
-  {name:'くさった死体',rank:'B',limit:2,ex:true, desc:'設置型以外のタロットの効果範囲＋0.1m'}
+  {name:'くさった死体',rank:'B',limit:2,ex:false, desc:'設置型以外のタロットの効果範囲＋0.1m'}
 ];
 
 const TARGET_RARES = [
@@ -302,6 +309,7 @@ const TARGET_RARES = [
   {name:'ネクロバルサ', w:50000}, {name:'プラチナキング', w:50000},
   {name:'ランプのまおう', w:50000}, {name:'レジェンドホース', w:50000}
 ];
+
 function getWeight(mName) {
   let r = TARGET_RARES.find(x => x.name === mName);
   if(r) return r.w;
@@ -366,10 +374,12 @@ function saveData() { localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(app
 function updateStats() {
   let aCount = Object.values(appState.arcanaCounts).reduce((a,b)=>a+b,0);
   let mCount = Object.values(appState.monsterCounts).reduce((a,b)=>a+b,0);
+  
   let arcEl = document.getElementById('stat-arc');
   let monEl = document.getElementById('stat-mon');
   let arcCont = document.getElementById('stat-arc-container');
   let monCont = document.getElementById('stat-mon-container');
+  
   arcEl.textContent = aCount; monEl.textContent = mCount;
   
   if(aCount === 20) arcCont.classList.add('ok'); else arcCont.classList.remove('ok');
@@ -406,6 +416,7 @@ function renderArcana() {
       <button class="btn-count btn-plus" onclick="event.stopPropagation(); modArc('${a.name}', 1, ${a.limit})">＋</button></div></td>
       <td><div class="prio-group">${['H','A','N','D'].map(x => `<button class="prio-btn ${prio===x?'active-'+x:''}" onclick="event.stopPropagation(); setPrio('${a.name}', '${x}')">${x}</button>`).join('')}</div></td>`;
     tbody.appendChild(tr);
+    
     const trDesc = document.createElement('tr'); trDesc.id = 'arc-desc-' + a.name; trDesc.className = 'desc-row'; trDesc.style.display = 'none';
     trDesc.innerHTML = `<td colspan="3">${a.desc}</td>`;
     tbody.appendChild(trDesc);
@@ -419,17 +430,24 @@ function renderMonster() {
   const tbody = document.getElementById('tbody-monster'); tbody.innerHTML = ''; let lastRank = '';
   MONSTER_DATA.forEach(m => {
     if(m.rank !== lastRank) { const trH = document.createElement('tr'); trH.innerHTML = `<td colspan="2" style="background:#eee; font-weight:bold; font-size:11px; padding:6px;">▼ ${m.rank}ランク</td>`; tbody.appendChild(trH); lastRank = m.rank; }
+    
     if(m.name === 'バラモスゾンビ' || m.name === 'アクバー') {
-      const trLine = document.createElement('tr'); trLine.innerHTML = `<td colspan="2" style="border-top: 2px dashed #9fa8da; padding: 0; height: 0;"></td>`; tbody.appendChild(trLine);
+      const trLine = document.createElement('tr'); 
+      trLine.innerHTML = `<td colspan="2" style="border-top: 2px dashed #9fa8da; padding: 0; height: 0;"></td>`; 
+      tbody.appendChild(trLine);
     }
+
     const cnt = appState.monsterCounts[m.name] || 0; const tr = document.createElement('tr'); 
     if(cnt > 0) tr.style.backgroundColor = '#e8f5e9'; else tr.style.backgroundColor = '#fff';
-    tr.className = 'click-row'; tr.onclick = () => toggleDesc('mon-desc-' + m.name);
+    tr.className = 'click-row';
+    tr.onclick = () => toggleDesc('mon-desc-' + m.name);
+    
     tr.innerHTML = `<td><span class="rank-badge rk-${m.rank}">${m.rank}</span> <b>${m.name}</b></td>
       <td style="text-align:right;"><div style="display:flex; align-items:center; justify-content:flex-end;">
       <button class="btn-count btn-minus" onclick="event.stopPropagation(); modMon('${m.name}', -1, ${m.limit})">－</button>
       <span class="val-display">${cnt}</span><button class="btn-count btn-plus" onclick="event.stopPropagation(); modMon('${m.name}', 1, ${m.limit})">＋</button></div></td>`;
     tbody.appendChild(tr);
+    
     const trDesc = document.createElement('tr'); trDesc.id = 'mon-desc-' + m.name; trDesc.className = 'desc-row'; trDesc.style.display = 'none';
     trDesc.innerHTML = `<td colspan="2">${m.desc}</td>`;
     tbody.appendChild(trDesc);
@@ -443,6 +461,7 @@ function renderException() {
   const am = MONSTER_DATA.filter(m => (appState.monsterCounts[m.name] || 0) > 0);
   if(am.length === 0) { c.innerHTML = '<div style="padding:15px; text-align:center; color:#888; background:#fff; border-radius:6px; border:1px solid #eee;">モンスターが選択されていません</div>'; return; }
   am.sort((a,b) => (b.ex ? 1 : 0) - (a.ex ? 1 : 0));
+  
   let html = '<table><thead><tr><th style="width:140px;">モンスター</th><th>固定アルカナ</th></tr></thead><tbody>';
   am.forEach(m => {
     const cnt = appState.monsterCounts[m.name]; let selHTML = '';
@@ -501,7 +520,7 @@ function getPairScore(t1, t2, isLimit5, isAlone2) {
   if (!t1 && !t2) return 0; 
   if (!t1 || !t2) {
     let single = t1 || t2;
-    if(single === 'D') return -500; 
+    if(single === 'D') return -500000; 
     return 0; 
   }
   
@@ -682,6 +701,37 @@ function renderResult(map, container, state) {
   container.innerHTML = html + '</tbody></table>';
 }
 
+function renderCardList(needsMap, container, title) {
+  let totalCards = 0;
+  for(let mName in needsMap) {
+    totalCards += Object.values(needsMap[mName]).reduce((a, b) => a + b, 0);
+  }
+
+  let limitWarningHtml = '';
+  if (totalCards > 140) {
+    limitWarningHtml = `<div style="color:#c62828; font-weight:bold; margin-bottom:10px; padding:8px; background:#ffebee; border:1px solid #ef5350; border-radius:4px;">
+      ⚠️ 必要枚数の合計が ${totalCards} 枚となり、ゲーム内のタロット所持上限（最大140枚）を超えています。<br>
+      複数のデッキで同じモンスター・アルカナの組み合わせを使い回せるように、構成を見直すことをおすすめします。
+    </div>`;
+  }
+
+  let html = limitWarningHtml + `<div style="background:#fff; border:2px solid #ddd; border-radius:6px; padding:15px;"><h3 style="margin-top:0; color:#2E7D32;">${title} <span style="font-size:12px; color:#555; font-weight:normal;">(合計: ${totalCards}枚)</span></h3>`;
+    
+  const finalSorted = Object.keys(needsMap).sort((a,b) => getWeight(b) - getWeight(a));
+  const arcanaOrder = {}; ARCANA_DATA.forEach((a, idx) => { arcanaOrder[a.name] = idx; });
+
+  finalSorted.forEach(m => {
+    let cardsHtml = ''; 
+    let sortedArcanas = Object.keys(needsMap[m]).sort((a, b) => arcanaOrder[a] - arcanaOrder[b]);
+    for(let c of sortedArcanas) {
+      cardsHtml += `<span class="res-card" style="background:${getArcanaColor(c)}; font-size:12px;">${c} x${needsMap[m][c]}</span>`;
+    }
+    html += `<div class="opt-res-row"><div class="opt-res-mon">${m}</div><div>${cardsHtml}</div></div>`;
+  }); 
+  html += '</div>'; 
+  container.innerHTML += html;
+}
+
 async function calculateNeedsOnly() {
   const output = document.getElementById('global-result');
   if(savedDecks.length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">保存デッキがありません</span>'; return; }
@@ -722,13 +772,19 @@ async function calculateNeedsOnly() {
   } catch(e) { hasError = true; }
 
   if(activeCount === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">有効なデッキがありません。</span>'; return; }
-  if(hasError) { 
-    output.innerHTML = `<span style="color:red; font-weight:bold;">一部のデッキに禁止ルールを回避できない構成があります。手動で確認してください。<br>（対象: ${errorDecks.join(', ')}）</span>`; 
-    return; 
-  }
-  if(Object.keys(finalGlobalNeeds).length === 0) { output.innerHTML = '<span style="color:red; font-weight:bold;">計算結果がありません。</span>'; return; }
   
-  renderCardList(finalGlobalNeeds, output, "📊 現在の必要カードリスト (最適化適用状況)");
+  output.innerHTML = '';
+  if(hasError) { 
+    output.innerHTML += `<div style="margin-bottom:15px; padding:10px; background:#ffebee; border:1px solid #ef5350; color:#c62828; border-radius:4px;">
+      <b>⚠️ 一部のデッキで構成エラーが発生しました</b><br>
+      以下のデッキは禁止ルール（H+Dなど）を回避できないため、計算から除外されました。<br>
+      手動で構成を見直してください：<br>
+      <b>・${errorDecks.join('<br>・')}</b>
+    </div>`; 
+  }
+  if(Object.keys(finalGlobalNeeds).length === 0) { output.innerHTML += '<span style="color:red; font-weight:bold;">計算結果がありません。</span>'; return; }
+  
+  renderCardList(finalGlobalNeeds, output, "📊 現在の必要カードリスト");
 }
 
 function checkStockOverflow(needs) {
@@ -785,7 +841,7 @@ async function runHybridOptimization(isDeepSearch = false) {
   let overallBestScore = Infinity;
 
   let maxLoop0 = isDeepSearch ? 3000 : 100;
-  let maxLoopN = isDeepSearch ? 1500 : 100;
+  let maxLoopN = isDeepSearch ? 1000 : 100;
 
   for(let allowance = 0; allowance <= maxAllowance; allowance++) {
     let currentLimits = {};
@@ -955,6 +1011,10 @@ async function runHybridOptimization(isDeepSearch = false) {
   
   let warningHtml = '';
   let finalNeeds = overallBestResult.needs;
+  
+  // ▼ ここで警告文を一旦リセットして、出力用の変数だけ準備
+  output.innerHTML = ''; 
+
   for(let mName in finalNeeds) {
     let limit = rareStockLimits[mName];
     if(limit && limit > 0) {
@@ -965,18 +1025,13 @@ async function runHybridOptimization(isDeepSearch = false) {
     }
   }
   
-  let html = warningHtml + `<div style="background:#fff; border:2px solid #ddd; border-radius:6px; padding:15px;"><h3 style="margin-top:0; color:#2E7D32;">🎴 最適化完了: 必要カードリスト</h3>`;
-  const finalSorted = Object.keys(finalNeeds).sort((a,b) => getWeight(b) - getWeight(a));
-  const arcanaOrder = {}; ARCANA_DATA.forEach((a, idx) => { arcanaOrder[a.name] = idx; });
-  finalSorted.forEach(m => {
-    let cardsHtml = ''; 
-    let sortedArcanas = Object.keys(finalNeeds[m]).sort((a, b) => arcanaOrder[a] - arcanaOrder[b]);
-    for(let c of sortedArcanas) {
-      cardsHtml += `<span class="res-card" style="background:${getArcanaColor(c)}; font-size:12px;">${c} x${finalNeeds[m][c]}</span>`;
-    }
-    html += `<div class="opt-res-row"><div class="opt-res-mon">${m}</div><div>${cardsHtml}</div></div>`;
-  }); 
-  html += '</div>'; output.innerHTML = html;
+  // 警告文があれば先に出力する
+  if(warningHtml) {
+    output.innerHTML = warningHtml;
+  }
+  
+  // 共通の描画関数を呼び出して表示
+  renderCardList(finalNeeds, output, "🎴 最適化完了: 必要カードリスト");
 }
 
 // ================= EXPORT / IMPORT =================
@@ -1069,4 +1124,3 @@ function switchTab(id) {
 </script>
 </body>
 </html>
-
